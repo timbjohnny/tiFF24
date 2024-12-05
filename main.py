@@ -182,24 +182,26 @@ class Gamestate:
 
     def draw(self):
         self.game.screen.fill((30, 30, 30))
+        spalte = int(game.width / 24)
+        zeile = int(game.height / 30)
         for i in range(len(board.get_board())):
             for j in range(len(board.get_boardI(i))):
                 if board.get_boardIJ(i,j) == 1: #Auf dem Feld ist ein Punkt zum Essen
-                    pygame.draw.circle(game.screen, 'white', ((j*int(game.width / 24)) + (0.5*int(game.width / 24)),(i*int(game.height / 30)) + (0.5*int(game.height / 30))), 4)
+                    pygame.draw.circle(game.screen, 'white', ((j*spalte) + (0.5*spalte),(i*zeile) + (0.5*zeile)), 4)
                 elif board.get_boardIJ(i,j) == 2: # Horizonatale Wand
-                    pygame.draw.line(game.screen, 'white', ((j*int(game.width / 24)),(i*int(game.height / 30)) + (0.5*int(game.height / 30))), ((j*int(game.width / 24)) + int(game.width / 24),(i*int(game.height / 30)) + (0.5*int(game.height / 30))), 1)
+                    pygame.draw.line(game.screen, 'white', ((j*spalte),(i*zeile) + (0.5*zeile)), ((j*spalte) + spalte,(i*zeile) + (0.5*zeile)), 1)
                 elif board.get_boardIJ(i,j) == 3: #Vertikale Wand
-                    pygame.draw.line(game.screen, 'blue', ((j*int(game.width / 24)) + (0.5*int(game.width / 24)),(i*int(game.height / 30))), ((j*int(game.width / 24)) + (0.5*int(game.width / 24)),(i*int(game.height / 30)) + int(game.height / 30)), 3)
+                    pygame.draw.line(game.screen, 'blue', ((j*spalte) + (0.5*spalte),(i*zeile)), ((j*spalte) + (0.5*spalte),(i*zeile) + zeile), 3)
                 elif board.get_boardIJ(i,j) == 4: #Horizontale dicke Wand
-                    pygame.draw.line(game.screen, 'blue', ((j*int(game.width / 24)),(i*int(game.height / 30)) + (0.5*int(game.height / 30))), ((j*int(game.width / 24)) + int(game.width / 24),(i*int(game.height / 30)) + (0.5*int(game.height / 30))), 3)
+                    pygame.draw.line(game.screen, 'blue', ((j*spalte),(i*zeile) + (0.5*zeile)), ((j*spalte) + spalte,(i*zeile) + (0.5*zeile)), 3)
                 elif board.get_boardIJ(i,j) == 5: #Kurve unten links
-                    pygame.draw.arc(game.screen, 'blue', [(j*int(game.width / 24) - 0.4*int(game.width / 24)) - 3, (i*int(game.height / 30) + 0.5*int(game.height / 30))-1, int(game.width / 24), int(game.height / 30)], 0, pi/2, 3)
+                    pygame.draw.arc(game.screen, 'blue', [(j*spalte - 0.4*spalte) - 3, (i*zeile + 0.5*zeile)-1, spalte, zeile], 0, pi/2, 3)
                 elif board.get_boardIJ(i,j) == 6: #Kurve unten rechts
-                    pygame.draw.arc(game.screen, 'blue', [(j*int(game.width / 24) + 0.5*int(game.width / 24)), (i*int(game.height / 30) + 0.5*int(game.height / 30)), int(game.width / 24), int(game.height / 30)], pi/2, pi, 3)
+                    pygame.draw.arc(game.screen, 'blue', [(j*spalte + 0.5*spalte), (i*zeile + 0.5*zeile), spalte, zeile], pi/2, pi, 3)
                 elif board.get_boardIJ(i,j) == 7: #Kurve oben rechts
-                    pygame.draw.arc(game.screen, 'blue', [(j*int(game.width / 24) + 0.5*int(game.width / 24)), (i*int(game.height / 30) - 0.4*int(game.height / 30)) - 2, int(game.width / 24), int(game.height / 30)], pi, 3*(pi/2), 3)
+                    pygame.draw.arc(game.screen, 'blue', [(j*spalte + 0.5*spalte), (i*zeile - 0.4*zeile) - 2, spalte, zeile], pi, 3*(pi/2), 3)
                 elif board.get_boardIJ(i,j) == 8: # Kurve oben links
-                    pygame.draw.arc(game.screen, 'blue', [(j*int(game.width / 24) - 0.5*int(game.width / 24)) , (i*int(game.height / 30) - 0.5*int(game.height / 30))+1, int(game.width / 24), int(game.height / 30)], 3*(pi/2), 2*pi, 3)
+                    pygame.draw.arc(game.screen, 'blue', [(j*spalte - 0.5*spalte) , (i*zeile - 0.5*zeile)+1, spalte, zeile], 3*(pi/2), 2*pi, 3)
         self.player.draw(self.game.screen)
         pygame.display.flip()
 
