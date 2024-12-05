@@ -71,7 +71,7 @@ class GameState:
             if event.type == pygame.QUIT:
                 self.game.running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:  # Pause the game
+                if event.key == pygame.K_ESCAPE: # Pause the game
                     self.game.switch_state("pause")
 
     def update(self):
