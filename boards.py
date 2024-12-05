@@ -37,5 +37,7 @@ class Board:
     def get_boardI(self, i):
         return self.boards[i]   
     def get_boardIJ(self, i, j):
-        return self.boards[i][j]  
+        return self.boards[i][j]
+    def set_boardXY(self, i, j, newValue):
+        self.boards[i][j] = newValue   
         

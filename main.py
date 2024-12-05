@@ -167,8 +167,16 @@ class Leaderboard:
 class Gamestate:
     def __init__(self, game):
         self.game = game
-        self.player = Player(self.game.width // 2, self.game.height // 2)
+        self.spalte = int(game.width / 24)
+        self.zeile = int(game.height / 30)
+        self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
 
+    def getZeile(self):
+        return self.zeile
+    
+    def getSpalte(self):
+        return self.spalte
+    
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -181,27 +189,25 @@ class Gamestate:
         self.player.update()
 
     def draw(self):
-        self.game.screen.fill((30, 30, 30))
-        spalte = int(game.width / 24)
-        zeile = int(game.height / 30)
+        self.game.screen.fill((0, 0, 0))
         for i in range(len(board.get_board())):
             for j in range(len(board.get_boardI(i))):
                 if board.get_boardIJ(i,j) == 1: #Auf dem Feld ist ein Punkt zum Essen
-                    pygame.draw.circle(game.screen, 'white', ((j*spalte) + (0.5*spalte),(i*zeile) + (0.5*zeile)), 4)
+                    pygame.draw.circle(game.screen, 'white', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + (0.5*self.zeile)), 4)
                 elif board.get_boardIJ(i,j) == 2: # Horizonatale Wand
-                    pygame.draw.line(game.screen, 'white', ((j*spalte),(i*zeile) + (0.5*zeile)), ((j*spalte) + spalte,(i*zeile) + (0.5*zeile)), 1)
+                    pygame.draw.line(game.screen, 'white', ((j*self.spalte),(i*self.zeile) + (0.5*self.zeile)), ((j*self.spalte) + self.spalte,(i*self.zeile) + (0.5*self.zeile)), 1)
                 elif board.get_boardIJ(i,j) == 3: #Vertikale Wand
-                    pygame.draw.line(game.screen, 'blue', ((j*spalte) + (0.5*spalte),(i*zeile)), ((j*spalte) + (0.5*spalte),(i*zeile) + zeile), 3)
+                    pygame.draw.line(game.screen, 'blue', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile)), ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + self.zeile), 3)
                 elif board.get_boardIJ(i,j) == 4: #Horizontale dicke Wand
-                    pygame.draw.line(game.screen, 'blue', ((j*spalte),(i*zeile) + (0.5*zeile)), ((j*spalte) + spalte,(i*zeile) + (0.5*zeile)), 3)
+                    pygame.draw.line(game.screen, 'blue', ((j*self.spalte),(i*self.zeile) + (0.5*self.zeile)), ((j*self.spalte) + self.spalte,(i*self.zeile) + (0.5*self.zeile)), 3)
                 elif board.get_boardIJ(i,j) == 5: #Kurve unten links
-                    pygame.draw.arc(game.screen, 'blue', [(j*spalte - 0.4*spalte) - 3, (i*zeile + 0.5*zeile)-1, spalte, zeile], 0, pi/2, 3)
+                    pygame.draw.arc(game.screen, 'blue', [(j*self.spalte - 0.4*self.spalte) - 3, (i*self.zeile + 0.5*self.zeile)-1, self.spalte, self.zeile], 0, pi/2, 3)
                 elif board.get_boardIJ(i,j) == 6: #Kurve unten rechts
-                    pygame.draw.arc(game.screen, 'blue', [(j*spalte + 0.5*spalte), (i*zeile + 0.5*zeile), spalte, zeile], pi/2, pi, 3)
+                    pygame.draw.arc(game.screen, 'blue', [(j*self.spalte + 0.5*self.spalte), (i*self.zeile + 0.5*self.zeile), self.spalte, self.zeile], pi/2, pi, 3)
                 elif board.get_boardIJ(i,j) == 7: #Kurve oben rechts
-                    pygame.draw.arc(game.screen, 'blue', [(j*spalte + 0.5*spalte), (i*zeile - 0.4*zeile) - 2, spalte, zeile], pi, 3*(pi/2), 3)
+                    pygame.draw.arc(game.screen, 'blue', [(j*self.spalte + 0.5*self.spalte), (i*self.zeile - 0.4*self.zeile) - 2, self.spalte, self.zeile], pi, 3*(pi/2), 3)
                 elif board.get_boardIJ(i,j) == 8: # Kurve oben links
-                    pygame.draw.arc(game.screen, 'blue', [(j*spalte - 0.5*spalte) , (i*zeile - 0.5*zeile)+1, spalte, zeile], 3*(pi/2), 2*pi, 3)
+                    pygame.draw.arc(game.screen, 'blue', [(j*self.spalte - 0.5*self.spalte) , (i*self.zeile - 0.5*self.zeile)+1, self.spalte, self.zeile], 3*(pi/2), 2*pi, 3)
         self.player.draw(self.game.screen)
         pygame.display.flip()
 
@@ -230,29 +236,58 @@ class PauseMenu:
         pygame.display.flip()
 
 class Player:
-    def __init__(self, x, y):
-        pacman_images = []
-
+    def __init__(self, x, y, gamestate):
+        self.spalte = gamestate.getSpalte()
+        self.zeile = gamestate.getZeile()
+        self.pacman_images = []
         for i in range(0, 4):
-            pacman_images.append(pygame.transform.scale(pygame.image.load(f'assets/pacman/pacman_{i}.png'), (30, 30)))
+            self.pacman_images.append(pygame.transform.scale(pygame.image.load(f'assets/pacman/pacman_{i}.png'), (30, 30)))
         self.x = x
         self.y = y
+        self.arrayX = 11
+        self.arrayY = 21
         self.size = 50
         self.color = (0, 255, 0)
-        self.speed = 5
+        #self.speed = 0.1
+        self.imageSkip = 0
+        self.direction = 0
+        
     def update(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_UP]:
-            self.y -= self.speed
+            self.direction = 2
+            if board.get_boardIJ(self.arrayY - 1,self.arrayX) in (0,1):
+                self.y -= self.zeile
+                self.arrayY -= 1
         if keys[pygame.K_DOWN]:
-            self.y += self.speed
+            self.direction = 3
+            if board.get_boardIJ(self.arrayY + 1,self.arrayX) in (0,1):
+                self.y += self.zeile
+                self.arrayY += 1
         if keys[pygame.K_LEFT]:
-            self.x -= self.speed
+            self.direction = 1
+            if board.get_boardIJ(self.arrayY,self.arrayX - 1) in (0,1):
+                self.x -= self.spalte
+                self.arrayX -= 1
         if keys[pygame.K_RIGHT]:
-            self.x += self.speed
+            self.direction = 0
+            if board.get_boardIJ(self.arrayY,self.arrayX + 1) in (0,1):
+                self.x += self.spalte
+                self.arrayX += 1
 
     def draw(self, screen):
-        pygame.draw.rect(screen, self.color, (self.x, self.y, self.size, self.size))
+        if self.imageSkip < 3.75:
+            self.imageSkip += 0.25
+        else:
+            self.imageSkip = 0
+        if self.direction == 0:  # direction = right
+            screen.blit(self.pacman_images[int(self.imageSkip)], (self.x, self.y))
+        elif self.direction == 1:  # direction = left
+            screen.blit(pygame.transform.flip(self.pacman_images[int(self.imageSkip)], True, False), (self.x, self.y))
+        elif self.direction == 2:  # direction = up
+            screen.blit(pygame.transform.rotate(self.pacman_images[int(self.imageSkip)], 90), (self.x, self.y))
+        elif self.direction == 3:  # direction = down
+            screen.blit(pygame.transform.rotate(self.pacman_images[int(self.imageSkip)], 270), (self.x, self.y))
 
 if __name__ == "__main__":
     board = Board()
