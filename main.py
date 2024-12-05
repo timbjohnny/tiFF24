@@ -231,6 +231,10 @@ class PauseMenu:
 
 class Player:
     def __init__(self, x, y):
+        pacman_images = []
+
+        for i in range(0, 4):
+            pacman_images.append(pygame.transform.scale(pygame.image.load(f'assets/pacman/pacman_{i}.png'), (30, 30)))
         self.x = x
         self.y = y
         self.size = 50

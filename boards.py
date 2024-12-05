@@ -1,6 +1,4 @@
 
-import pygame
-from math import pi
 
 class Board:
     def __init__(self):
