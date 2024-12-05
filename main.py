@@ -176,9 +176,12 @@ class Gamestate:
     
     def getSpalte(self):
         return self.spalte
+    def getPlayer(self):
+        return self.player
     
     def handle_events(self):
         for event in pygame.event.get():
+            self.player.handle_events(event)
             if event.type == pygame.QUIT:
                 self.game.running = False
             elif event.type == pygame.KEYDOWN:
@@ -246,35 +249,71 @@ class Player:
         self.y = y
         self.arrayX = 11
         self.arrayY = 21
+        self.targetX = x
+        self.targetY = y
         self.size = 50
         self.color = (0, 255, 0)
-        #self.speed = 0.1
+        self.speed = 3
         self.imageSkip = 0
         self.direction = 0
+        self.move_event = pygame.USEREVENT + 1  # Benutzerdefiniertes Ereignis für die Bewegung
+        pygame.time.set_timer(self.move_event, 180)  # Timer setzen: jede Sekunde ein Ereignis
         
-    def update(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP]:
-            self.direction = 2
-            if board.get_boardIJ(self.arrayY - 1,self.arrayX) in (0,1):
-                self.y -= self.zeile
-                self.arrayY -= 1
-        if keys[pygame.K_DOWN]:
-            self.direction = 3
-            if board.get_boardIJ(self.arrayY + 1,self.arrayX) in (0,1):
-                self.y += self.zeile
-                self.arrayY += 1
-        if keys[pygame.K_LEFT]:
-            self.direction = 1
-            if board.get_boardIJ(self.arrayY,self.arrayX - 1) in (0,1):
-                self.x -= self.spalte
-                self.arrayX -= 1
-        if keys[pygame.K_RIGHT]:
-            self.direction = 0
-            if board.get_boardIJ(self.arrayY,self.arrayX + 1) in (0,1):
-                self.x += self.spalte
-                self.arrayX += 1
+        
+    def handle_events(self, event):
+        """Verarbeitet Tasteneingaben."""
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                self.direction = 0
+            elif event.key == pygame.K_LEFT:
+                self.direction = 1
+            elif event.key == pygame.K_UP:
+                self.direction = 2
+            elif event.key == pygame.K_DOWN:
+                self.direction = 3
 
+    def update(self):
+        """Aktualisiert die Position."""
+        # Bewegung in Richtung des Zielpunkts
+        if self.x < self.targetX:
+            self.x += self.speed
+        elif self.x > self.targetX:
+            self.x -= self.speed
+        if self.y < self.targetY:
+            self.y += self.speed
+        elif self.y > self.targetY:
+            self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+        if abs(self.x - self.targetX) < self.speed:
+            self.x = self.targetX
+        if abs(self.y - self.targetY) < self.speed:
+            self.y = self.targetY
+
+        # Bewegung nur ausführen, wenn Ziel erreicht ist
+        if self.x == self.targetX and self.y == self.targetY and self.direction is not None:
+            if self.direction == 0 and board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):  # Rechts
+                self.targetX += self.spalte
+                self.arrayX += 1
+                if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
+                    board.set_boardXY(self.arrayY, self.arrayX, 0)
+            elif self.direction == 1 and board.get_boardIJ(self.arrayY, self.arrayX - 1) in (0, 1):  # Links
+                self.targetX -= self.spalte
+                self.arrayX -= 1
+                if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
+                    board.set_boardXY(self.arrayY, self.arrayX, 0)
+            elif self.direction == 2 and board.get_boardIJ(self.arrayY - 1, self.arrayX) in (0, 1):  # Oben
+                self.targetY -= self.zeile
+                self.arrayY -= 1
+                if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
+                    board.set_boardXY(self.arrayY, self.arrayX, 0)
+            elif self.direction == 3 and board.get_boardIJ(self.arrayY + 1, self.arrayX) in (0, 1):  # Unten
+                self.targetY += self.zeile
+                self.arrayY += 1
+                if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
+                    board.set_boardXY(self.arrayY, self.arrayX, 0)
+                
+                
     def draw(self, screen):
         if self.imageSkip < 3.75:
             self.imageSkip += 0.25
