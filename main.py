@@ -157,11 +157,25 @@ class Leaderboard:
 
             with open("./assets/leaderboard.json", "r") as f:
                 data = json.load(f)
-                for i in range(len(data)):
-                    self.game.screen.blit(self.small_font.render(str(data["p" + str(i)][0]["name"]), False, (255, 255, 255)),
-                                (280, 150 + 25 * i))
-                    self.game.screen.blit(self.small_font.render(str(data["p" + str(i)][0]["score"]), False, (255, 255, 255)),
-                                (600, 150 + 25 * i))
+                                # Sort the leaderboard by score
+                sorted_data = {key: value for key, value in
+                            sorted(data.items(), key=lambda item: item[1][0]['score'], reverse=True)}
+
+                # Iterate over sorted keys
+                for i, (key, value) in enumerate(sorted_data.items()):
+                    player_name = value[0]["name"]
+                    player_score = value[0]["score"]
+                    # Render player name centered relative to header
+                    names_text = self.small_font.render(player_name, False, (255, 255, 255))
+                    name_x = 100 + ((name_text.get_width() - names_text.get_width()) // 2)
+                    name_y = 200 + 38 * i
+                    self.game.screen.blit(names_text, (name_x, name_y))
+                    # Render player score centered relative to header
+                    scores_text = self.small_font.render(str(player_score), False, (255, 255, 255))
+                    score_x = 490 + ((score_text.get_width() - scores_text.get_width()) // 2)
+                    score_y = 200 + 38 * i
+                    self.game.screen.blit(scores_text, (score_x, score_y))
+
         pygame.display.flip()
 
 class Gamestate:
