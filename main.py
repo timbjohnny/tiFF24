@@ -113,7 +113,6 @@ class Player:
         self.size = 50
         self.color = (0, 255, 0)
         self.speed = 5
-
     def update(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_UP]:
@@ -131,3 +130,4 @@ class Player:
 if __name__ == "__main__":
     game = Game()
     game.run()
+
