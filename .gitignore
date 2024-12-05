@@ -156,7 +156,7 @@ cython_debug/
 
 # file: ~/.gitignore_global
 .DS_Store
-.idea
+.idea/
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can

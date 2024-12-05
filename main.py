@@ -2,6 +2,7 @@ import pygame
 import sys
 from boards import Board
 from math import pi
+import json
 
 class Game:
     
@@ -19,7 +20,8 @@ class Game:
         # Game states
         self.states = {
             "main_menu": MainMenu(self),
-            "game": GameState(self),
+            "leaderboard": Leaderboard(self),
+            "game": Gamestate(self),
             "pause": PauseMenu(self)
         }
         self.current_state = self.states["main_menu"]
@@ -44,28 +46,125 @@ class Game:
 class MainMenu:
     def __init__(self, game):
         self.game = game
-        self.title_font = pygame.font.Font(None, 74)
+        self.title_font = pygame.font.Font("./assets/MinecraftRegular-Bmg3.otf", 100)
+        self.select_font = pygame.font.Font("./assets/MinecraftRegular-Bmg3.otf", 50)
+        self.rect_width = 600
+        self.rect_height = 130
+        self.pointer_pos_x = 175
+        self.pointer_pos_y = 450
 
     def handle_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.game.running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:  # Start the game
-                    self.game.switch_state("game")
+                if event.key == pygame.K_RETURN:
+                    match self.pointer_pos_y:
+                        case 450:
+                            self.game.switch_state("game")  # startet spiel
+                        case 525:
+                            self.game.switch_state("leaderboard")   # geht ins leaderboard
+                        case 600:
+                            self.game.running = False   # quittet das spiel
+                elif event.key == pygame.K_UP:
+                    if self.pointer_pos_y > 450:
+                        self.pointer_pos_y -= 75
+                        match self.pointer_pos_y:
+                            case 450:   # pointer auf "Start Game"
+                                self.pointer_pos_x = 175
+                            case 525:   # pointer auf "Leaderboard"
+                                self.pointer_pos_x = 125
+                elif event.key == pygame.K_DOWN:
+                    if self.pointer_pos_y < 600:
+                        self.pointer_pos_y += 75
+                        match self.pointer_pos_y:
+                            case 525:   # pointer auf "Leaderboard"
+                                self.pointer_pos_x = 140
+                            case 600:   # pointer auf "Quit"
+                                self.pointer_pos_x = 260
+
+
 
     def update(self):
-        pass  # Main menu might not need updates for static screens
+        pass
+
 
     def draw(self):
-        self.game.screen.fill((0, 50, 100))
-        title_text = self.title_font.render("Main Menu", True, (255, 255, 255))
-        instruction_text = pygame.font.Font(None, 36).render("Press ENTER to Start", True, (200, 200, 200))
-        self.game.screen.blit(title_text, (self.game.width // 2 - title_text.get_width() // 2, 150))
-        self.game.screen.blit(instruction_text, (self.game.width // 2 - instruction_text.get_width() // 2, 300))
+        self.game.screen.fill((0, 0, 0))
+        title_text = self.title_font.render("P     M   n", False, (255, 255, 255))
+        self.game.screen.blit(title_text, (self.game.width // 2 - title_text.get_width() // 2, 100))
+        pygame.draw.rect(self.game.screen, (0,0,155), (((self.game.width - self.rect_width) // 2), 80, self.rect_width, self.rect_height), 3, 8)
+        # Start Text
+        start_text = self.select_font.render("Start Game", False, (255, 255, 255))
+        self.game.screen.blit(start_text, (self.game.width // 2 - start_text.get_width() // 2, 450))
+        # Leaderboard Text
+        leaderboard_text = self.select_font.render("Leaderboard", False, (255, 255, 255))
+        self.game.screen.blit(leaderboard_text, (self.game.width // 2 - leaderboard_text.get_width() // 2, 525))
+        # Quit Text
+        quit_text = self.select_font.render("Quit", False, (255, 255, 255))
+        self.game.screen.blit(quit_text, (self.game.width // 2 - quit_text.get_width() // 2, 600))
+        # Select Pointer
+        pointer_text = self.select_font.render(">", False, (255,255,255))
+        self.game.screen.blit(pointer_text, (self.pointer_pos_x, self.pointer_pos_y))
         pygame.display.flip()
 
-class GameState:
+class Leaderboard:
+    def __init__(self, game):
+        self.game = game
+        self.font = pygame.font.Font("./assets/MinecraftRegular-Bmg3.otf", 50)
+        self.small_font = pygame.font.Font("./assets/MinecraftRegular-Bmg3.otf", 40)
+        self.rect_width = 600
+        self.rect_height = 130
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.game.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                        self.game.switch_state("main_menu")
+
+
+    def update(self):
+        pass
+
+
+    def draw(self):
+        self.game.screen.fill((0, 0, 0))
+        pygame.draw.rect(self.game.screen, (0,0,155), (((self.game.width - self.rect_width) // 2), 80, self.rect_width, self.rect_height), 3, 8)
+        # Leaderboard Text
+        leaderboard_text = self.font.render("Leaderboard", False, (255, 255, 255))
+        # Select Pointer
+        pointer_text = self.font.render(">", False, (255,255,255))
+        # Back Text
+        back_text = self.font.render("Back to menu", False, (255, 255, 255))
+        # Info Text
+        name_text = self.small_font.render("Name", False, (255, 255, 255))
+        score_text = self.small_font.render("Score", False, (255, 255, 255))
+
+
+        if self.rect_height < 625:  # Leaderboard loading animation
+            self.rect_height += 25
+            pygame.time.wait(50)
+        else:   # show options and leaderboard
+            pygame.time.wait(100)
+            # show text
+            self.game.screen.blit(back_text, (self.game.width // 2 - back_text.get_width() // 2, 725))
+            self.game.screen.blit(pointer_text, (150, 725))
+            self.game.screen.blit(leaderboard_text, (self.game.width // 2 - leaderboard_text.get_width() // 2, 100))
+            self.game.screen.blit(name_text, (100, 155))
+            self.game.screen.blit(score_text, (490, 155))
+
+            with open("./assets/leaderboard.json", "r") as f:
+                data = json.load(f)
+                for i in range(len(data)):
+                    self.game.screen.blit(self.small_font.render(str(data["p" + str(i)][0]["name"]), False, (255, 255, 255)),
+                                (280, 150 + 25 * i))
+                    self.game.screen.blit(self.small_font.render(str(data["p" + str(i)][0]["score"]), False, (255, 255, 255)),
+                                (600, 150 + 25 * i))
+        pygame.display.flip()
+
+class Gamestate:
     def __init__(self, game):
         self.game = game
         self.player = Player(self.game.width // 2, self.game.height // 2)
