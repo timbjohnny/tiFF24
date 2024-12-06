@@ -21,11 +21,55 @@ class Game:
         self.dir_path = os.path.dirname(__file__)
 
         self.pacman_images = []
-        for i in range(0, 4): self.pacman_images.append(pygame.image.load(f'{self.dir_path}/assets/pacman/pacman_{i}.png'))
+        for i in range(0, 4): self.pacman_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/pacman/pacman_{i}.png'), (30, 30)))
+        
+        
+        # blinky looking right
         self.blinkyR_images = []
-        for i in range(0, 2): self.blinkyR_images.append(pygame.image.load(f'{self.dir_path}/assets/blinky/rGr_{i}.png'))
+        for i in range(0, 2): self.blinkyR_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/blinky/rGr_{i}.png'), (30,30)))
+        # Blinky looking down
+        self.blinkyD_images = []
+        for i in range(0, 2): self.blinkyD_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/blinky/rGd_{i}.png'), (30,30)))
+        # blinky looking up
+        self.blinkyU_images = []
+        for i in range(0, 2): self.blinkyU_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/blinky/rGu_{i}.png'), (30,30)))
+        
+        # clyde looking right
+        self.clydeR_images = []
+        for i in range(0, 2): self.clydeR_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/clyde/oGr_{i}.png'), (30,30)))
+        # clyde looking down
+        self.clydeD_images = []
+        for i in range(0, 2): self.clydeD_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/clyde/oGd_{i}.png'), (30,30)))
+        # clyde looking up
+        self.clydeU_images = []
+        for i in range(0, 2): self.clydeU_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/clyde/oGu_{i}.png'), (30,30)))
+
+        # inky looking right
         self.inkyR_images = []
-        for i in range(0, 2): self.inkyR_images.append(pygame.image.load(f'{self.dir_path}/assets/inky/bGr_{i}.png'))
+        for i in range(0, 2): self.inkyR_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/inky/bGr_{i}.png'), (30,30)))
+        # inky looking down
+        self.inkyD_images = []
+        for i in range(0, 2): self.inkyD_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/inky/bGd_{i}.png'), (30,30)))
+        # inky looking up
+        self.inkyU_images = []
+        for i in range(0, 2): self.inkyU_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/inky/bGu_{i}.png'), (30,30)))
+   
+        # pinky looking right      
+        self.pinkyR_images = []
+        for i in range(0, 2): self.pinkyR_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/pinky/pGr_{i}.png'), (30,30)))
+        # pinky looking down
+        self.pinkyD_images = []
+        for i in range(0, 2): self.pinkyD_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/pinky/pGd_{i}.png'), (30,30)))
+        # pinky looking up
+        self.pinkyU_images = []
+        for i in range(0, 2): self.pinkyU_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/pinky/pGu_{i}.png'), (30,30)))
+
+        # vulnerable ghosts
+        self.vulnerable_images = []
+        for i in range(0, 2): self.vulnerable_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/vulnerable/bG_{i}.png'), (30,30)))
+        # blinking ghosts
+        self.blinking_images = []
+        for i in range(0, 2): self.blinking_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/vulnerable/wG_{i}.png'), (30,30)))
 
         # Game states
         self.states = {
@@ -35,9 +79,11 @@ class Game:
             "pause": PauseMenu(self)
         }
         self.current_state = self.states["main_menu"]
+        self.prev_state = None
 
     def switch_state(self, state_name):
         """Switch to a new state by name."""
+        self.prev_state = self.current_state
         self.current_state = self.states[state_name]
         if self.current_state == self.states["game"]:
             self.states["game"].countdown()
@@ -110,9 +156,9 @@ class MainMenu:
         self.game.screen.fill((0, 0, 0))
         title_text = self.title_font.render("P     M  n", False, (255, 255, 255))
         self.game.screen.blit(title_text, (self.game.width // 2 - title_text.get_width() // 2, 100))
-        self.game.screen.blit(self.game.blinkyR_images[int(self.ghosts_animstate)], (185, 133))
-        self.game.screen.blit(self.game.pacman_images[int(self.pacman_animstate)], (255, 133))
-        self.game.screen.blit(self.game.inkyR_images[int(self.ghosts_animstate)], (460, 133))
+        self.game.screen.blit(pygame.transform.scale(self.game.blinkyR_images[int(self.ghosts_animstate)], (48,48)), (185, 133))
+        self.game.screen.blit(pygame.transform.scale(self.game.pacman_images[int(self.pacman_animstate)], (48,48)), (255, 133))
+        self.game.screen.blit(pygame.transform.scale(self.game.inkyR_images[int(self.ghosts_animstate)], (48,48)), (460, 133))
         pygame.draw.rect(self.game.screen, (0, 0, 155), (((self.game.width - self.rect_width) // 2), 80, self.rect_width, self.rect_height), 3, 8)
         # Start Text
         start_text = self.select_font.render("Start Game", False, (255, 255, 255))
@@ -219,13 +265,14 @@ class Leaderboard:
 
 class Gamestate:
     def __init__(self, game):
-        pygame.mixer.music.load('sounds/pacman_beginning.wav')
-        pygame.mixer.music.play(0, 0.0)
-        pygame.mixer.music.set_volume(10)
         self.game = game
         self.spalte = int(game.width / 24)
         self.zeile = int(game.height / 30)
         self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
+        self.blinky = Blinky(345, 283, self)
+        self.inky = Inky(300, 337, self)
+        self.pinky = Pinky(345, 337, self)
+        self.clyde = Clyde(390, 337, self)
 
     def getZeile(self):
         return self.zeile
@@ -248,22 +295,26 @@ class Gamestate:
         self.player.update()
         
     def countdown(self):
-        font = pygame.font.Font('assets/MinecraftRegular-Bmg3.otf', 230)  # Larger font for countdown
-        messages = ["Ready", "3", "2", "1", "Go!"]
-        for message in(messages):
-            self.game.screen.fill('black')  # Cover the screen with black, but we’ll draw the game below
-            self.draw()
-            text = font.render(message, True, 'red')
-            text_rect = text.get_rect(center=(game.width // 2, game.height // 2))
-            self.game.screen.blit(text, text_rect)
-            pygame.display.flip()
-            pygame.time.delay(1000)  # Wait for 1 second between each message   
-            
+        if self.game.prev_state == self.game.states["main_menu"]:
+            font = pygame.font.Font('assets/MinecraftRegular-Bmg3.otf', 230)  # Larger font for countdown
+            messages = ["Ready", "3", "2", "1", "Go!"]
+            pygame.mixer.music.load('sounds/pacman_beginning.wav')
+            pygame.mixer.music.play(0, 0.0)
+            pygame.mixer.music.set_volume(0.2)
+            for message in(messages):
+                self.game.screen.fill('black')  # Cover the screen with black, but we’ll draw the game below
+                self.draw()
+                text = font.render(message, True, 'red')
+                text_rect = text.get_rect(center=(game.width // 2, game.height // 2))
+                self.game.screen.blit(text, text_rect)
+                pygame.display.flip()
+                pygame.time.delay(1000)  # Wait for 1 second between each message   
+                
     def victoryScreen(self):
         self.game.screen.fill('black')
         pygame.mixer.music.load('sounds/pacman_victory.mp3')
         pygame.mixer.music.play(1, 0.0)
-        pygame.mixer.music.set_volume(5)
+        pygame.mixer.music.set_volume(0.2)
 
         # Anzeige des "Victory!"-Textes
         font_victory = pygame.font.Font('assets/MinecraftRegular-Bmg3.otf', 150)
@@ -304,6 +355,10 @@ class Gamestate:
                 elif board.get_boardIJ(i,j) == 8: # Kurve oben links
                     pygame.draw.arc(game.screen, 'blue', [(j*self.spalte - 0.5*self.spalte) , (i*self.zeile - 0.5*self.zeile)+1, self.spalte, self.zeile], 3*(pi/2), 2*pi, 3)
         self.player.draw(self.game.screen)
+        self.blinky.draw(self.game.screen)
+        self.inky.draw(self.game.screen)
+        self.pinky.draw(self.game.screen)
+        self.clyde.draw(self.game.screen)
         if board.checkVictory():
             self.victoryScreen()            
         pygame.display.flip()
@@ -311,7 +366,7 @@ class Gamestate:
 class PauseMenu:
     def __init__(self, game):
         self.game = game
-        self.title_font = pygame.font.Font(None, 74)
+        self.title_font = pygame.font.Font("assets/MinecraftRegular-Bmg3.otf", 74)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -325,9 +380,8 @@ class PauseMenu:
         pass  # Pause menu is static
 
     def draw(self):
-        self.game.screen.fill((50, 0, 0))
-        pause_text = self.title_font.render("Paused", True, (255, 255, 255))
-        instruction_text = pygame.font.Font(None, 36).render("Press ESC to Resume", True, (200, 200, 200))
+        pause_text = self.title_font.render("Paused", True, (200, 200, 200))
+        instruction_text = pygame.font.Font("assets/MinecraftRegular-Bmg3.otf", 36).render("Press ESC to Resume", True, (200, 200, 200))
         self.game.screen.blit(pause_text, (self.game.width // 2 - pause_text.get_width() // 2, 150))
         self.game.screen.blit(instruction_text, (self.game.width // 2 - instruction_text.get_width() // 2, 300))
         pygame.display.flip()
@@ -336,10 +390,8 @@ class Player:
     def __init__(self, x, y, gamestate):
         self.spalte = gamestate.getSpalte()
         self.zeile = gamestate.getZeile()
-        self.pacman_images = []
+        self.pacman_images = gamestate.game.pacman_images
         self.game = gamestate.game
-        for i in range(0, 4):
-            self.pacman_images.append(pygame.transform.scale(pygame.image.load(f'{self.game.dir_path}/assets/pacman/pacman_{i}.png'), (30, 30)))
         self.x = x
         self.y = y
         self.arrayX = 11
@@ -350,6 +402,7 @@ class Player:
         self.speed = 3
         self.imageSkip = 0
         self.direction = 0
+        self.buffer_direction = 0
         self.move_event = pygame.USEREVENT + 1  # Benutzerdefiniertes Ereignis für die Bewegung
         pygame.time.set_timer(self.move_event, 180)  # Timer setzen: jede Sekunde ein Ereignis
         
@@ -358,17 +411,34 @@ class Player:
         """Verarbeitet Tasteneingaben."""
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
-                self.direction = 0
+                self.buffer_direction = 0
             elif event.key == pygame.K_LEFT:
-                self.direction = 1
+                self.buffer_direction = 1
             elif event.key == pygame.K_UP:
-                self.direction = 2
+                self.buffer_direction = 2
             elif event.key == pygame.K_DOWN:
-                self.direction = 3
+                self.buffer_direction = 3
+
+    def handle_direction(self):
+        # Change direction if no obstacle, as well as buffer the input to change direction when possible
+        match self.buffer_direction:
+            case 0: # Right
+                if board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):
+                    self.direction = 0
+            case 1: # Left
+                if board.get_boardIJ(self.arrayY, self.arrayX - 1) in (0, 1):
+                    self.direction = 1
+            case 2: # Up
+                if board.get_boardIJ(self.arrayY - 1, self.arrayX) in (0, 1):
+                    self.direction = 2
+            case 3: # Down
+                if board.get_boardIJ(self.arrayY + 1, self.arrayX) in (0, 1):
+                    self.direction = 3
 
     def update(self):
         """Aktualisiert die Position."""
         # Bewegung in Richtung des Zielpunkts
+        self.handle_direction()
         if self.x < self.targetX:
             self.x += self.speed
         elif self.x > self.targetX:
@@ -430,8 +500,131 @@ class Player:
         elif self.direction == 3:  # direction = down
             screen.blit(pygame.transform.rotate(self.pacman_images[int(self.imageSkip)], 270), (self.x, self.y))
 
+class Blinky:
+    def __init__(self, x, y, gamestate):
+        self.spalte = gamestate.getSpalte()
+        self.zeile = gamestate.getZeile()
+        self.blinky_images = gamestate.game.blinkyR_images
+        self.game = gamestate.game
+        self.x = x
+        self.y = y
+        self.ghosts_animstate = 0
+        self.ghosts_anim_dir = 1
+        self.last_update_time = 0
+
+    def handle_events(self, event):
+        pass
+
+    def update(self):
+        pass
+
+    def draw(self, screen):
+        screen.blit(self.game.blinkyR_images[int(self.ghosts_animstate)], (self.x, self.y))
+
+        current_time = pygame.time.get_ticks()  # current time in ms since game started
+        if current_time - self.last_update_time >= 200:
+            self.last_update_time = current_time
+            if self.ghosts_animstate >= len(self.game.blinkyR_images) - 1:
+                self.ghosts_anim_dir = -1
+            elif self.ghosts_animstate <= 0:
+                self.ghosts_anim_dir = 1
+
+            self.ghosts_animstate += 1 * self.ghosts_anim_dir
+
+class Inky:
+    def __init__(self, x, y, gamestate):
+        self.spalte = gamestate.getSpalte()
+        self.zeile = gamestate.getZeile()
+        self.inky_images = gamestate.game.inkyD_images
+        self.game = gamestate.game
+        self.x = x
+        self.y = y
+        self.ghosts_animstate = 0
+        self.ghosts_anim_dir = 1
+        self.last_update_time = 0
+
+    def handle_events(self, event):
+        pass
+
+    def update(self):
+        pass
+
+    def draw(self, screen):
+        screen.blit(self.game.inkyR_images[int(self.ghosts_animstate)], (self.x, self.y))
+
+        current_time = pygame.time.get_ticks()  # current time in ms since game started
+        if current_time - self.last_update_time >= 200:
+            self.last_update_time = current_time
+            if self.ghosts_animstate >= len(self.game.inkyR_images) - 1:
+                self.ghosts_anim_dir = -1
+            elif self.ghosts_animstate <= 0:
+                self.ghosts_anim_dir = 1
+
+            self.ghosts_animstate += 1 * self.ghosts_anim_dir
+
+class Clyde:
+    def __init__(self, x, y, gamestate):
+        self.spalte = gamestate.getSpalte()
+        self.zeile = gamestate.getZeile()
+        self.clyde_images = gamestate.game.clydeR_images
+        self.game = gamestate.game
+        self.x = x
+        self.y = y
+        self.ghosts_animstate = 0
+        self.ghosts_anim_dir = 1
+        self.last_update_time = 0
+
+    def handle_events(self, event):
+        pass
+
+    def update(self):
+        pass
+
+    def draw(self, screen):
+        screen.blit(self.game.clydeR_images[int(self.ghosts_animstate)], (self.x, self.y))
+
+        current_time = pygame.time.get_ticks()  # current time in ms since game started
+        if current_time - self.last_update_time >= 200:
+            self.last_update_time = current_time
+            if self.ghosts_animstate >= len(self.game.clydeR_images) - 1:
+                self.ghosts_anim_dir = -1
+            elif self.ghosts_animstate <= 0:
+                self.ghosts_anim_dir = 1
+
+            self.ghosts_animstate += 1 * self.ghosts_anim_dir
+
+class Pinky:
+    def __init__(self, x, y, gamestate):
+        self.spalte = gamestate.getSpalte()
+        self.zeile = gamestate.getZeile()
+        self.pinky_images = gamestate.game.pinkyR_images
+        self.game = gamestate.game
+        self.x = x
+        self.y = y
+        self.ghosts_animstate = 0
+        self.ghosts_anim_dir = 1
+        self.last_update_time = 0
+
+    def handle_events(self, event):
+        pass
+
+    def update(self):
+        pass
+
+    def draw(self, screen):
+        screen.blit(self.game.pinkyR_images[int(self.ghosts_animstate)], (self.x, self.y))
+
+        current_time = pygame.time.get_ticks()  # current time in ms since game started
+        if current_time - self.last_update_time >= 200:
+            self.last_update_time = current_time
+            if self.ghosts_animstate >= len(self.game.pinkyR_images) - 1:
+                self.ghosts_anim_dir = -1
+            elif self.ghosts_animstate <= 0:
+                self.ghosts_anim_dir = 1
+
+            self.ghosts_animstate += 1 * self.ghosts_anim_dir
+
 if __name__ == "__main__":
-    print(os.path.dirname(__file__))
     board = Board()
     game = Game(board)
     game.run()
