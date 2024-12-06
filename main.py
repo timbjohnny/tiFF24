@@ -3,6 +3,8 @@ import sys
 from boards import Board
 from math import pi
 import json
+import os
+
 
 class Game:
     
@@ -16,6 +18,14 @@ class Game:
         pygame.display.set_caption("Pac-Man")
         self.clock = pygame.time.Clock()
         self.running = True
+        self.dir_path = os.path.dirname(__file__)
+
+        self.pacman_images = []
+        for i in range(0, 4): self.pacman_images.append(pygame.image.load(f'{self.dir_path}/assets/pacman/pacman_{i}.png'))
+        self.blinkyR_images = []
+        for i in range(0, 2): self.blinkyR_images.append(pygame.image.load(f'{self.dir_path}/assets/blinky/rGr_{i}.png'))
+        self.inkyR_images = []
+        for i in range(0, 2): self.inkyR_images.append(pygame.image.load(f'{self.dir_path}/assets/inky/bGr_{i}.png'))
 
         # Game states
         self.states = {
@@ -46,12 +56,17 @@ class Game:
 class MainMenu:
     def __init__(self, game):
         self.game = game
-        self.title_font = pygame.font.Font("tiFF24/assets/MinecraftRegular-Bmg3.otf", 100)
-        self.select_font = pygame.font.Font("tiFF24/assets/MinecraftRegular-Bmg3.otf", 50)
+        self.title_font = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 100)
+        self.select_font = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 50)
         self.rect_width = 600
         self.rect_height = 130
         self.pointer_pos_x = 175
         self.pointer_pos_y = 450
+
+        self.pacman_animstate = 0
+        self.ghosts_animstate = 0
+        self.ghosts_anim_dir = 1
+        self.last_update_time = 0
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -91,9 +106,12 @@ class MainMenu:
 
     def draw(self):
         self.game.screen.fill((0, 0, 0))
-        title_text = self.title_font.render("P     M   n", False, (255, 255, 255))
+        title_text = self.title_font.render("P     M  n", False, (255, 255, 255))
         self.game.screen.blit(title_text, (self.game.width // 2 - title_text.get_width() // 2, 100))
-        pygame.draw.rect(self.game.screen, (0,0,155), (((self.game.width - self.rect_width) // 2), 80, self.rect_width, self.rect_height), 3, 8)
+        self.game.screen.blit(self.game.blinkyR_images[int(self.ghosts_animstate)], (185, 133))
+        self.game.screen.blit(self.game.pacman_images[int(self.pacman_animstate)], (255, 133))
+        self.game.screen.blit(self.game.inkyR_images[int(self.ghosts_animstate)], (460, 133))
+        pygame.draw.rect(self.game.screen, (0, 0, 155), (((self.game.width - self.rect_width) // 2), 80, self.rect_width, self.rect_height), 3, 8)
         # Start Text
         start_text = self.select_font.render("Start Game", False, (255, 255, 255))
         self.game.screen.blit(start_text, (self.game.width // 2 - start_text.get_width() // 2, 450))
@@ -104,15 +122,34 @@ class MainMenu:
         quit_text = self.select_font.render("Quit", False, (255, 255, 255))
         self.game.screen.blit(quit_text, (self.game.width // 2 - quit_text.get_width() // 2, 600))
         # Select Pointer
-        pointer_text = self.select_font.render(">", False, (255,255,255))
+        pointer_text = self.select_font.render(">", False, (255, 255, 255))
         self.game.screen.blit(pointer_text, (self.pointer_pos_x, self.pointer_pos_y))
+
+        # Update pacman animation state
+        if self.pacman_animstate >= len(self.game.pacman_images) - 1:
+            self.pacman_animstate = 0
+        else:
+            self.pacman_animstate += 0.15
+
+        # Update ghost animation state depending on last time animation changed, because animation was too fast doing it like pacman
+        current_time = pygame.time.get_ticks()  # current time in ms since game started
+        if current_time - self.last_update_time >= 200:
+            self.last_update_time = current_time
+            if self.ghosts_animstate >= len(self.game.blinkyR_images) - 1:
+                self.ghosts_anim_dir = -1
+            elif self.ghosts_animstate <= 0:
+                self.ghosts_anim_dir = 1
+
+            self.ghosts_animstate += 1 * self.ghosts_anim_dir
+            
+
         pygame.display.flip()
 
 class Leaderboard:
     def __init__(self, game):
         self.game = game
-        self.font = pygame.font.Font("tiFF24/assets/MinecraftRegular-Bmg3.otf", 50)
-        self.small_font = pygame.font.Font("tiFF24/assets/MinecraftRegular-Bmg3.otf", 40)
+        self.font = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 50)
+        self.small_font = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 40)
         self.rect_width = 600
         self.rect_height = 130
 
@@ -155,7 +192,7 @@ class Leaderboard:
             self.game.screen.blit(name_text, (100, 155))
             self.game.screen.blit(score_text, (490, 155))
 
-            with open("tiff24/assets/leaderboard.json", "r") as f:
+            with open(f"{self.game.dir_path}/assets/leaderboard.json", "r") as f:
                 data = json.load(f)
                                 # Sort the leaderboard by score
                 sorted_data = {key: value for key, value in
@@ -257,8 +294,9 @@ class Player:
         self.spalte = gamestate.getSpalte()
         self.zeile = gamestate.getZeile()
         self.pacman_images = []
+        self.game = gamestate.game
         for i in range(0, 4):
-            self.pacman_images.append(pygame.transform.scale(pygame.image.load(f'tiFF24/assets/pacman/pacman_{i}.png'), (30, 30)))
+            self.pacman_images.append(pygame.transform.scale(pygame.image.load(f'{self.game.dir_path}/assets/pacman/pacman_{i}.png'), (30, 30)))
         self.x = x
         self.y = y
         self.arrayX = 11
@@ -343,6 +381,7 @@ class Player:
             screen.blit(pygame.transform.rotate(self.pacman_images[int(self.imageSkip)], 270), (self.x, self.y))
 
 if __name__ == "__main__":
+    print(os.path.dirname(__file__))
     board = Board()
     game = Game(board)
     game.run()
