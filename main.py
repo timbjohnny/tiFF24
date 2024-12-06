@@ -46,8 +46,8 @@ class Game:
 class MainMenu:
     def __init__(self, game):
         self.game = game
-        self.title_font = pygame.font.Font("./assets/MinecraftRegular-Bmg3.otf", 100)
-        self.select_font = pygame.font.Font("./assets/MinecraftRegular-Bmg3.otf", 50)
+        self.title_font = pygame.font.Font("tiFF24/assets/MinecraftRegular-Bmg3.otf", 100)
+        self.select_font = pygame.font.Font("tiFF24/assets/MinecraftRegular-Bmg3.otf", 50)
         self.rect_width = 600
         self.rect_height = 130
         self.pointer_pos_x = 175
@@ -111,8 +111,8 @@ class MainMenu:
 class Leaderboard:
     def __init__(self, game):
         self.game = game
-        self.font = pygame.font.Font("./assets/MinecraftRegular-Bmg3.otf", 50)
-        self.small_font = pygame.font.Font("./assets/MinecraftRegular-Bmg3.otf", 40)
+        self.font = pygame.font.Font("tiFF24/assets/MinecraftRegular-Bmg3.otf", 50)
+        self.small_font = pygame.font.Font("tiFF24/assets/MinecraftRegular-Bmg3.otf", 40)
         self.rect_width = 600
         self.rect_height = 130
 
@@ -155,7 +155,7 @@ class Leaderboard:
             self.game.screen.blit(name_text, (100, 155))
             self.game.screen.blit(score_text, (490, 155))
 
-            with open("./assets/leaderboard.json", "r") as f:
+            with open("tiff24/assets/leaderboard.json", "r") as f:
                 data = json.load(f)
                                 # Sort the leaderboard by score
                 sorted_data = {key: value for key, value in
@@ -258,7 +258,7 @@ class Player:
         self.zeile = gamestate.getZeile()
         self.pacman_images = []
         for i in range(0, 4):
-            self.pacman_images.append(pygame.transform.scale(pygame.image.load(f'assets/pacman/pacman_{i}.png'), (30, 30)))
+            self.pacman_images.append(pygame.transform.scale(pygame.image.load(f'tiFF24/assets/pacman/pacman_{i}.png'), (30, 30)))
         self.x = x
         self.y = y
         self.arrayX = 11
