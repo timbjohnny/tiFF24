@@ -1,4 +1,4 @@
-
+import pygame
 
 class Board:
     def __init__(self):
@@ -39,5 +39,19 @@ class Board:
     def get_boardIJ(self, i, j):
         return self.boards[i][j]
     def set_boardXY(self, i, j, newValue):
-        self.boards[i][j] = newValue   
-        
+        if self.boards[i][j] == 1 and newValue == 0:
+            pygame.mixer.Sound.play(pygame.mixer.Sound('sounds/pacman_chomp.wav'))
+            self.boards[i][j] = newValue   
+    def checkVictory(self):
+        victory = False
+        foodFound = False
+        for i in range(len(self.boards)):
+            for j in range(len(self.boards[i])):
+                if self.boards[i][j] == 1:
+                    foodFound = True
+                    break                              
+            if foodFound:
+                break
+        if not foodFound:
+            victory = True
+        return victory        
