@@ -39,6 +39,8 @@ class Game:
     def switch_state(self, state_name):
         """Switch to a new state by name."""
         self.current_state = self.states[state_name]
+        if self.current_state == self.states["game"]:
+            self.states["game"].countdown()
 
     def run(self):
         while self.running:
@@ -217,6 +219,9 @@ class Leaderboard:
 
 class Gamestate:
     def __init__(self, game):
+        pygame.mixer.music.load('sounds/pacman_beginning.wav')
+        pygame.mixer.music.play(0, 0.0)
+        pygame.mixer.music.set_volume(10)
         self.game = game
         self.spalte = int(game.width / 24)
         self.zeile = int(game.height / 30)
@@ -241,6 +246,42 @@ class Gamestate:
 
     def update(self):
         self.player.update()
+        
+    def countdown(self):
+        font = pygame.font.Font('assets/MinecraftRegular-Bmg3.otf', 230)  # Larger font for countdown
+        messages = ["Ready", "3", "2", "1", "Go!"]
+        for message in(messages):
+            self.game.screen.fill('black')  # Cover the screen with black, but we’ll draw the game below
+            self.draw()
+            text = font.render(message, True, 'red')
+            text_rect = text.get_rect(center=(game.width // 2, game.height // 2))
+            self.game.screen.blit(text, text_rect)
+            pygame.display.flip()
+            pygame.time.delay(1000)  # Wait for 1 second between each message   
+            
+    def victoryScreen(self):
+        self.game.screen.fill('black')
+        pygame.mixer.music.load('sounds/pacman_victory.mp3')
+        pygame.mixer.music.play(1, 0.0)
+        pygame.mixer.music.set_volume(5)
+
+        # Anzeige des "Victory!"-Textes
+        font_victory = pygame.font.Font('assets/MinecraftRegular-Bmg3.otf', 150)
+        text_victory = font_victory.render("Victory!", True, 'yellow')
+        text_victory_rect = text_victory.get_rect(center=(game.width // 2, game.height // 2 - 100))  # Etwas nach oben verschoben
+        self.game.screen.blit(text_victory, text_victory_rect)
+
+        # Anzeige des Scores
+       #TODO font_score = pygame.font.Font('assets/MinecraftRegular-Bmg3.otf', 150)
+       #TODO text_score = font_score.render(f"Score: {score}", True, 'white')
+       #TODO text_score_rect = text_score.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100))  # Etwas nach unten verschoben
+       #TODO screen.blit(text_score, text_score_rect)
+
+        # Bildschirm aktualisieren
+        pygame.display.flip()
+        pygame.time.delay(6000)  # 3 Sekunden warten
+        self.game.switch_state("main_menu") 
+                
 
     def draw(self):
         self.game.screen.fill((0, 0, 0))
@@ -263,6 +304,8 @@ class Gamestate:
                 elif board.get_boardIJ(i,j) == 8: # Kurve oben links
                     pygame.draw.arc(game.screen, 'blue', [(j*self.spalte - 0.5*self.spalte) , (i*self.zeile - 0.5*self.zeile)+1, self.spalte, self.zeile], 3*(pi/2), 2*pi, 3)
         self.player.draw(self.game.screen)
+        if board.checkVictory():
+            self.victoryScreen()            
         pygame.display.flip()
 
 class PauseMenu:
@@ -304,7 +347,6 @@ class Player:
         self.targetX = x
         self.targetY = y
         self.size = 50
-        self.color = (0, 255, 0)
         self.speed = 3
         self.imageSkip = 0
         self.direction = 0
@@ -344,6 +386,14 @@ class Player:
 
         # Bewegung nur ausführen, wenn Ziel erreicht ist
         if self.x == self.targetX and self.y == self.targetY and self.direction is not None:
+            if self.arrayX == len(board.get_boardI(self.arrayY)) - 1:
+                self.arrayX= 0
+                self.x = -self.spalte
+                self.targetX = 0
+            elif self.arrayX == 0:
+                self.arrayX = len(board.get_boardI(self.arrayY)) - 1
+                self.x = self.spalte * len(board.get_boardI(self.arrayY))
+                self.targetX = (self.spalte - 1) * len(board.get_boardI(self.arrayY))
             if self.direction == 0 and board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):  # Rechts
                 self.targetX += self.spalte
                 self.arrayX += 1
