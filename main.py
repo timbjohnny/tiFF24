@@ -303,6 +303,19 @@ class Gamestate:
         self.inky = Inky(300, 337, self)
         self.pinky = Pinky(345, 337, self)
         self.clyde = Clyde(390, 337, self)
+        
+        
+    def resetGamestate(self):
+        board.resetBoard()
+        self.game = game
+        self.spalte = int(game.width / 24)
+        self.zeile = int(game.height / 30)
+        self.score = 0
+        self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
+        self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
+        self.inky = Inky(300, 337, self)
+        self.pinky = Pinky(345, 337, self)
+        self.clyde = Clyde(390, 337, self)  
 
     def getZeile(self):
         return self.zeile
@@ -350,16 +363,42 @@ class Gamestate:
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
         text = font.render(f"Lives: ", True, 'white')
         self.game.screen.blit(text, (400, 735))
-        if self.player.lives == 3:
-            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550, 735))
-            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (600, 735))
-            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (650, 735))
-        elif self.player.lives == 2:
-            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550, 735))
-            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (600, 735))
-        elif self.player.lives == 1:
-            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550, 735))
+        if int(self.player.lives) == 3:
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (1* 50), 735))
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (2* 50), 735))
+        elif int(self.player.lives) == 2:
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (1* 50), 735))
+        elif int(self.player.lives) == 1:
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
+        elif int(self.player.lives) == 0:
+            self.gameOver()
             
+    def gameOver(self):
+        # Hintergrund schwarz
+        pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_death.mp3')
+        pygame.mixer.music.play(1, 0.0)
+        pygame.mixer.music.set_volume(0.2)
+        self.game.screen.fill('black')
+        # Anzeige des "Victory!"-Textes
+        font_defeat = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 100)
+        text_defeat = font_defeat.render("GAME OVER!", True, 'red')
+        text_defeat_rect = text_defeat.get_rect(center=(game.width // 2, game.height // 2 - 100))  # Etwas nach oben verschoben
+        self.game.screen.blit(text_defeat, text_defeat_rect)
+        # Anzeige des Scores
+        font_score = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 80)
+        text_score = font_score.render(f"Score: {self.score}", True, 'white')
+        text_score_rect = text_score.get_rect(center=(game.width // 2, game.height // 2 + 100))  # Etwas nach unten verschoben
+        self.game.screen.blit(text_score, text_score_rect)
+        # Bildschirm aktualisieren
+        pygame.display.flip()
+        pygame.time.delay(5000)  # 3 Sekunden warten     
+        board.resetBoard()
+        self.resetGamestate()     
+        self.game.switch_state("main_menu") 
+         
+      
     def victoryScreen(self):
         self.game.screen.fill('black')
         pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_victory.mp3')
@@ -377,7 +416,7 @@ class Gamestate:
         self.game.screen.blit(text_score, text_score_rect)
 
         pygame.display.flip()
-        pygame.time.delay(6000)
+        pygame.time.delay(6000)  # 3 Sekunden warten
         self.game.switch_state("main_menu") 
                 
 
@@ -591,7 +630,7 @@ class Blinky:
         
         queue = [(start_x, start_y)]
         
-        while queue >0:
+        while queue:
             curren_x, curren_y = queue.pop(0)
             if curren_x == goal_x and curren_y == goal_y:
                 # Pfad rekonstruieren
