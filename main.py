@@ -268,6 +268,7 @@ class Gamestate:
         self.game = game
         self.spalte = int(game.width / 24)
         self.zeile = int(game.height / 30)
+        self.score = 0
         self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
         self.blinky = Blinky(345, 283, self)
         self.inky = Inky(300, 337, self)
@@ -323,10 +324,10 @@ class Gamestate:
         self.game.screen.blit(text_victory, text_victory_rect)
 
         # Anzeige des Scores
-       #TODO font_score = pygame.font.Font('assets/MinecraftRegular-Bmg3.otf', 150)
-       #TODO text_score = font_score.render(f"Score: {score}", True, 'white')
-       #TODO text_score_rect = text_score.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100))  # Etwas nach unten verschoben
-       #TODO screen.blit(text_score, text_score_rect)
+        font_score = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 150)
+        text_score = font_score.render(f"Score: {self.score}", True, 'white')
+        text_score_rect = text_score.get_rect(center=(self.game.width // 2, self.game.height // 2 + 100))  # Etwas nach unten verschoben
+        self.game.screen.blit(text_score, text_score_rect)
 
         # Bildschirm aktualisieren
         pygame.display.flip()
@@ -399,7 +400,7 @@ class Player:
         self.targetX = x
         self.targetY = y
         self.size = 50
-        self.speed = 3
+        self.speed = 5
         self.imageSkip = 0
         self.direction = 0
         self.buffer_direction = 0
@@ -479,6 +480,7 @@ class Player:
                 self.arrayY -= 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
+                    self.game.game.score += 10
             elif self.direction == 3 and board.get_boardIJ(self.arrayY + 1, self.arrayX) in (0, 1):  # Unten
                 self.targetY += self.zeile
                 self.arrayY += 1
