@@ -1,3 +1,4 @@
+import string
 import pygame
 import sys
 from boards import Board
@@ -18,6 +19,7 @@ class Game:
         pygame.display.set_caption("Pac-Man")
         self.clock = pygame.time.Clock()
         self.running = True
+        self.score = 0
         self.dir_path = os.path.dirname(__file__)
 
         self.pacman_images = []
@@ -105,7 +107,8 @@ class Game:
             "main_menu": MainMenu(self),
             "leaderboard": Leaderboard(self),
             "game": Gamestate(self),
-            "pause": PauseMenu(self)
+            "pause": PauseMenu(self),
+            "name": EnterName(self)
         }
         self.current_state = self.states["main_menu"]
         self.prev_state = None
@@ -237,6 +240,7 @@ class Leaderboard:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                         self.game.switch_state("main_menu")
+                        self.rect_height = 130 # Resettet das Rechteck
 
 
     def update(self):
@@ -255,12 +259,18 @@ class Leaderboard:
         # Info Text
         name_text = self.small_font.render("Name", False, (255, 255, 255))
         score_text = self.small_font.render("Score", False, (255, 255, 255))
-
+        no_data_text_lines = [ # Text, wenn Leaderboard leer ist
+        "There is no one in",
+        "the Leaderboard,",
+        "play some games to", 
+        "get on the list!"
+        ]
 
         if self.rect_height < 625:  # Leaderboard loading animation
             self.rect_height += 25
             pygame.time.wait(50)
         else:   # show options and leaderboard
+            self.is_expanded = True
             pygame.time.wait(100)
             # show text
             self.game.screen.blit(back_text, (self.game.width // 2 - back_text.get_width() // 2, 725))
@@ -271,24 +281,29 @@ class Leaderboard:
 
             with open(f"{self.game.dir_path}/assets/leaderboard.json", "r") as f:
                 data = json.load(f)
-                # Sort the leaderboard by score
-                sorted_data = {key: value for key, value in
+                if data == {}:  # Wenn das Leaderboard leer ist, wird der Text angezeigt
+                    for i in range(len(no_data_text_lines)):
+                        y_offset = 50
+                        text = self.small_font.render(no_data_text_lines[i], False, (255, 255, 255))
+                        self.game.screen.blit(text, (self.game.width // 2 - text.get_width() // 2, 300 + y_offset * i))
+                else:
+                    # Leaderboard der Score größe nach sortieren
+                    sorted_data = {key: value for key, value in
                             sorted(data.items(), key=lambda item: item[1][0]['score'], reverse=True)}
-
-                # Iterate over sorted keys
-                for i, (key, value) in enumerate(sorted_data.items()):
-                    player_name = value[0]["name"]
-                    player_score = value[0]["score"]
-                    # Render player name centered relative to header
-                    names_text = self.small_font.render(player_name, False, (255, 255, 255))
-                    name_x = 100 + ((name_text.get_width() - names_text.get_width()) // 2)
-                    name_y = 200 + 38 * i
-                    self.game.screen.blit(names_text, (name_x, name_y))
-                    # Render player score centered relative to header
-                    scores_text = self.small_font.render(str(player_score), False, (255, 255, 255))
-                    score_x = 490 + ((score_text.get_width() - scores_text.get_width()) // 2)
-                    score_y = 200 + 38 * i
-                    self.game.screen.blit(scores_text, (score_x, score_y))
+                # Die Sortierten keys durchgehen und die Namen und Scores rendern
+                    for i, (key, value) in enumerate(sorted_data.items()):
+                        player_name = value[0]["name"]
+                        player_score = value[0]["score"]
+                        # Render player name centered relative to header
+                        names_text = self.small_font.render(player_name, False, (255, 255, 255))
+                        name_x = 100 + ((name_text.get_width() - names_text.get_width()) // 2)
+                        name_y = 200 + 38 * i
+                        self.game.screen.blit(names_text, (name_x, name_y))
+                        # Render player score centered relative to header
+                        scores_text = self.small_font.render(str(player_score), False, (255, 255, 255))
+                        score_x = 490 + ((score_text.get_width() - scores_text.get_width()) // 2)
+                        score_y = 200 + 38 * i
+                        self.game.screen.blit(scores_text, (score_x, score_y))
 
         pygame.display.flip()
 
@@ -302,7 +317,6 @@ class Gamestate:
         elif self.level == 2:
             self.spalte = int(game.width / 16)
             self.zeile = int(game.height / 22)    
-        self.score = 0
         if self.level == 1:
             self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
             self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
@@ -326,7 +340,7 @@ class Gamestate:
         elif self.level == 2:
             self.spalte = int(game.width / 16)
             self.zeile = int(game.height / 22)    
-        self.score = 0
+        # Score reset verschoben in EnterName
         if self.level == 1:
             self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
             self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
@@ -381,7 +395,7 @@ class Gamestate:
 
     def draw_score(self):
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
-        text = font.render(f"Score: {self.score}", True, 'white')
+        text = font.render(f"Score: {self.game.score}", True, 'white')
         self.game.screen.blit(text, (15, 735))
         
     def draw_lives(self):
@@ -413,7 +427,7 @@ class Gamestate:
         self.game.screen.blit(text_defeat, text_defeat_rect)
         # Anzeige des Scores
         font_score = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 80)
-        text_score = font_score.render(f"Score: {self.score}", True, 'white')
+        text_score = font_score.render(f"Score: {self.game.score}", True, 'white')
         text_score_rect = text_score.get_rect(center=(game.width // 2, game.height // 2 + 100))  # Etwas nach unten verschoben
         self.game.screen.blit(text_score, text_score_rect)
         # Bildschirm aktualisieren
@@ -435,14 +449,14 @@ class Gamestate:
         self.game.screen.blit(text_victory, text_victory_rect)
 
         font_score = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 100)
-        text_score = font_score.render(f"Score: {self.score}", True, 'white')
+        text_score = font_score.render(f"Score: {self.game.score}", True, 'white')
         text_score_rect = text_score.get_rect(center=(self.game.width // 2, self.game.height // 2 + 100))
         self.game.screen.blit(text_score, text_score_rect)
 
         pygame.display.flip()
         pygame.time.delay(6000)  # 3 Sekunden warten
         self.resetGamestate() 
-        self.game.switch_state("main_menu") 
+        self.game.switch_state("name") 
                 
 
     def draw(self):
@@ -505,6 +519,112 @@ class PauseMenu:
         self.game.screen.blit(pause_text, (self.game.width // 2 - pause_text.get_width() // 2, 150))
         self.game.screen.blit(instruction_text, (self.game.width // 2 - instruction_text.get_width() // 2, 300))
         pygame.display.flip()
+
+class EnterName:
+    def __init__(self, game):
+        self.game = game
+        self.alphabet = list(string.ascii_uppercase)
+        self.font = pygame.font.Font(f"{game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 50)
+        self.letters_text = self.font.render(self.alphabet[0], True, (255, 255, 255))
+        self.letter_0 = 0 # Index für Namenseingabe des ersten buchstaben => A
+        self.letter_1 = 0 # Index für Namenseingabe des zweiten buchstaben => A
+        self.letter_2 = 0 # Index für Namenseingabe des dritten buchstaben => A
+        self.pointer_pos_x = 300
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.game.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RIGHT: # pointer nach rechts verschieben
+                    if self.pointer_pos_x != 400:
+                        self.pointer_pos_x += 50
+                elif event.key == pygame.K_LEFT: # pointer nach links verschieben
+                    if self.pointer_pos_x != 300:
+                        self.pointer_pos_x -= 50
+                elif event.key == pygame.K_UP: # Buchstabe hoch
+                    match self.pointer_pos_x:
+                        case 300:
+                            if self.letter_0 == 0:
+                                self.letter_0 = 25
+                            else:
+                                self.letter_0 -= 1
+                        case 350:
+                            if self.letter_1 == 0:
+                                self.letter_1 = 25
+                            else:
+                                self.letter_1 -= 1
+                        case 400:
+                            if self.letter_2 == 0:
+                                self.letter_2 = 25
+                            else:
+                                self.letter_2 -= 1
+                elif event.key == pygame.K_DOWN: # Buchstabe runter
+                    match self.pointer_pos_x:
+                        case 300:
+                            if self.letter_0 == 25:
+                                self.letter_0 = 0
+                            else:
+                                self.letter_0 += 1
+                        case 350:
+                            if self.letter_1 == 25:
+                                self.letter_1 = 0
+                            else:
+                                self.letter_1 += 1
+                        case 400:
+                            if self.letter_2 == 25:
+                                self.letter_2 = 0
+                            else:
+                                self.letter_2 += 1
+                elif event.key == pygame.K_RETURN: # Enter um zurück ins hauptmenü
+                    self.game.name = self.alphabet[self.letter_0] + self.alphabet[self.letter_1] + self.alphabet[self.letter_2]
+                    self.write_to_file()
+                    self.game.switch_state("main_menu")
+                    self.game.score = 0
+    def update(self):
+        pass
+
+    def change_letter(self):    # Buchstaben ändern und pointer anzeigen
+        pointer_up = self.font.render("^", True, (255, 255, 255))
+        pointer_down = pygame.transform.rotate(pointer_up, 180)
+        self.game.screen.blit(pointer_up, (self.pointer_pos_x, 270))
+        self.game.screen.blit(pointer_down, (self.pointer_pos_x - 5, 327)) # 5px nach links verschoben, da pfeil sonst wegen rotation nicht zentriert ist
+
+    def write_to_file(self):
+        with open(f"{self.game.dir_path}/assets/leaderboard.json", "r") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = {}
+
+        # Create a new object with the desired elements
+        new_entry = {
+            "name": self.game.name,
+            "score": self.game.score
+        }
+
+        data[len(data)] = [new_entry]
+
+        # Write the updated data back to the JSON file
+        if data != {}:
+            with open(f"{self.game.dir_path}/assets/leaderboard.json", "w") as f:
+                json.dump(data, f, indent=4)
+        else:
+            print("Error occurred trying to write file.")
+
+    def draw(self):
+        self.game.screen.fill((0, 0, 0))
+        enter_name_text = self.font.render("Enter your name:", True, (255, 255, 255))
+        self.game.screen.blit(enter_name_text, (self.game.width // 2 - enter_name_text.get_width() // 2, 100)) # Zentriert Text
+        self.game.screen.blit(self.font.render(self.alphabet[self.letter_0], True, (255, 255, 255)), (300, 300))
+        self.game.screen.blit(self.font.render(self.alphabet[self.letter_1], True, (255, 255, 255)), (350, 300))
+        self.game.screen.blit(self.font.render(self.alphabet[self.letter_2], True, (255, 255, 255)), (400, 300))
+        self.change_letter()
+        press_enter_text = self.font.render("Press enter to continue", True, (255, 255, 255))
+        self.game.screen.blit(press_enter_text, (self.game.width // 2 - press_enter_text.get_width() // 2, 500)) # Zentriert Text
+        pygame.display.flip()
+
+
 
 class Player:
     def __init__(self, x, y, gamestate):
@@ -602,10 +722,10 @@ class Player:
                 self.arrayX += 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
-                    self.gamestate.score += 10
+                    self.game.score += 10
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
-                    self.gamestate.score += 50
+                    self.game.score += 50
                     self.power_up = True
 
             elif self.direction == 1 and board.get_boardIJ(self.level, self.arrayY, self.arrayX - 1) in (0, 1,9):  # Links
@@ -613,13 +733,13 @@ class Player:
                 self.arrayX -= 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
-                    self.gamestate.score += 10
+                    self.game.score += 10
             elif self.direction == 2 and board.get_boardIJ(self.level, self.arrayY - 1, self.arrayX) in (0, 1,9):  # Oben
                 self.targetY -= self.zeile
                 self.arrayY -= 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
-                    self.gamestate.score += 10
+                    self.game.score += 10
             elif self.direction == 3 and board.get_boardIJ(self.level, self.arrayY + 1, self.arrayX) in (0, 1,9):  # Unten
                 self.targetY += self.zeile
                 self.arrayY += 1
@@ -633,7 +753,7 @@ class Player:
                 print("Power-Up abgelaufen!")
                 self.power_up = False         
 
-            
+       
     def draw(self, screen):
         if self.imageSkip < 3.75:
             self.imageSkip += 0.25
@@ -745,7 +865,9 @@ class Blinky:
         if abs(self.y - self.targetY) < self.speed:
             self.y = self.targetY
     
-
+        while self.power_up == True:
+            if self.player
+            
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
 
