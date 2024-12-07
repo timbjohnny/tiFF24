@@ -745,7 +745,7 @@ class Player:
                 self.arrayY += 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
-                    self.gamestate.score += 10
+                    self.game.score += 10
 
         if self.power_up:
             elapsed_time = pygame.time.get_ticks() - self.start_time
@@ -865,8 +865,11 @@ class Blinky:
         if abs(self.y - self.targetY) < self.speed:
             self.y = self.targetY
     
-        while self.power_up == True:
-            if self.player
+        if self.gamestate.player.power_up == True:
+            if (self.x,self.y) == (self.player.x, self.player.y):
+                print("tot")
+
+    
             
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
