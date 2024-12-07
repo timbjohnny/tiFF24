@@ -400,6 +400,9 @@ class Gamestate:
             self.inky = Inky(300, 337, self)
             self.pinky = Pinky(345, 337, self)
             self.clyde = Clyde(390, 337, self)
+        self.ghosts = [self.blinky]#, self.inky, self.pinky, self.clyde] 
+        self.invulnerable = False
+        self.invulnerable_start_time = None
         
     def resetGamestate(self):
         board.resetBoard()
@@ -423,7 +426,10 @@ class Gamestate:
             self.blinky = Blinky(7*self.spalte, 7*self.zeile, self)
             self.inky = Inky(300, 337, self)
             self.pinky = Pinky(345, 337, self)
-            self.clyde = Clyde(390, 337, self) 
+            self.clyde = Clyde(390, 337, self)
+        self.ghosts = [self.blinky]#, self.inky, self.pinky, self.clyde] 
+        self.invulnerable = False
+        self.invulnerable_start_time = None  
     
     def getLevel(self):
         return self.level
@@ -528,18 +534,38 @@ class Gamestate:
         pygame.time.delay(6000)  # 3 Sekunden warten
         self.resetGamestate() 
         self.game.switch_state("name") 
+        
+    def checkCollision(self):
+        if self.invulnerable:
+            current_time = pygame.time.get_ticks()
+            if current_time - self.invulnerable_start_time > 2000:  # 2 Sekunden
+                self.invulnerable = False
+        if self.invulnerable == False:
+            for ghost in self.ghosts:
+                if self.player.arrayX == ghost.arrayX and self.player.arrayY == ghost.arrayY:
+                    self.player.lives -= 1  
+                    self.invulnerable = True
+                    self.invulnerable_start_time = pygame.time.get_ticks()
+                    break
                 
 
     def draw(self):
         self.game.screen.fill((0, 0, 0))
         self.drawBoard()
         self.draw_lives()
-        self.player.draw(self.game.screen)
+        if self.invulnerable:
+            # Berechne die Blinkfrequenz (z. B. alle 200 ms)
+            current_time = pygame.time.get_ticks()
+            if (current_time // 200) % 2 == 0:  # Wechselt alle 200 ms
+                self.player.draw(self.game.screen)
+        else:
+            self.player.draw(self.game.screen)        
         self.blinky.draw(self.game.screen)
         self.inky.draw(self.game.screen)
         self.pinky.draw(self.game.screen)
         self.clyde.draw(self.game.screen)
         self.draw_score()
+        self.checkCollision()
         if board.checkVictory(self.level):
             self.victoryScreen()            
         pygame.display.flip()
@@ -935,6 +961,12 @@ class Blinky:
             self.x = self.targetX
         if abs(self.y - self.targetY) < self.speed:
             self.y = self.targetY
+    
+        if self.gamestate.player.power_up == True:
+            if (self.arrayX,self.arrayY) == (self.player.arrayX, self.player.arrayY):
+                print("tot")
+
+    
             
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
