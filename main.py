@@ -964,7 +964,7 @@ class Blinky:
         self.ghosts_animstate = 0
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
-    
+        self.eaten = False
 
     def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
         rows = len(board.get_board(self.level))
@@ -1013,7 +1013,74 @@ class Blinky:
     def update(self):
         rows = len(board.get_board(self.level))
         cols = len(board.get_boardI(self.level, 0))
-        if self.gamestate.player.power_up == False:
+
+        if self.eaten:  # Geist wurde gegessen, bewegt sich zur Box
+            if self.x == self.targetX and self.y == self.targetY:
+                start_x, start_y = self.arrayX, self.arrayY
+                goal_x, goal_y = 11,12  # Zielposition der Box
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+        # Geist hat die Box erreicht
+            if (self.arrayX, self.arrayY) == (11, 13):
+                self.eaten = False  # Zurück zum normalen Verhalten
+                print("bin da")
+
+        elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
+            if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
+                self.eaten = True
+                print("got eaten")
+            if self.x == self.targetX and self.y == self.targetY:
+            
+                start_x, start_y = self.arrayX, self.arrayY
+            # Geist bewegt sich weg vom Spieler (z. B. in die entgegengesetzte Richtung)
+                goal_x, goal_y = abs(rows - self.player.arrayX), abs(cols - self.player.arrayY)
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+        else:  # Normales Verhalten
             if self.x == self.targetX and self.y == self.targetY:
                 start_x, start_y = self.arrayX, self.arrayY
                 goal_x, goal_y = self.player.arrayX, self.player.arrayY
@@ -1045,44 +1112,13 @@ class Blinky:
             elif self.y > self.targetY:
                 self.y -= self.speed
 
-#Runde Positionen ab, wenn Ziel erreicht
+        # Runde Positionen ab, wenn Ziel erreicht
             if abs(self.x - self.targetX) < self.speed:
                 self.x = self.targetX
             if abs(self.y - self.targetY) < self.speed:
                 self.y = self.targetY
-
-            
-        else:
-            if self.x == self.targetX and self.y == self.targetY:
-                start_x, start_y = self.arrayX, self.arrayY
-                goal_x, goal_y = abs(rows-self.player.arrayX), abs(cols-self.player.arrayY)
-                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
-
-                if move is not None:
-                    dx, dy = move
-                    self.arrayX += dx
-                    self.arrayY += dy
-                    self.targetX = self.arrayX * self.spalte
-                    self.targetY = self.arrayY * self.zeile
-
-            if self.x < self.targetX:
-                self.x += self.speed
-            elif self.x > self.targetX:
-                self.x -= self.speed
-            if self.y < self.targetY:
-                self.y += self.speed
-            elif self.y > self.targetY:
-                self.y -= self.speed
-
-#Runde Positionen ab, wenn Ziel erreicht
-            if abs(self.x - self.targetX) < self.speed:
-                self.x = self.targetX
-            if abs(self.y - self.targetY) < self.speed:
-                self.y = self.targetY
-
-            if self.gamestate.player.power_up == True:
-                if (self.arrayX,self.arrayY) == (self.player.arrayX, self.player.arrayY):
-                    print("tot")
+                
+                    
     
             
         # Tunnel-Logik wurde entfernt
