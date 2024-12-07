@@ -21,6 +21,7 @@ class Game:
         self.running = True
         self.dir_path = os.path.dirname(__file__)
         self.name = ""
+        self.score = 0
 
         self.pacman_images = []
         for i in range(0, 4): self.pacman_images.append(pygame.transform.scale(pygame.image.load(f'{self.dir_path}/assets/pacman/pacman_{i}.png'), (30, 30)))
@@ -81,7 +82,7 @@ class Game:
             "pause": PauseMenu(self),
             "name": EnterName(self)
         }
-        self.current_state = self.states["name"]
+        self.current_state = self.states["main_menu"]
         self.prev_state = None
 
     def switch_state(self, state_name):
@@ -211,6 +212,7 @@ class Leaderboard:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                         self.game.switch_state("main_menu")
+                        self.rect_height = 130 # Resettet das Rechteck
 
 
     def update(self):
@@ -240,6 +242,7 @@ class Leaderboard:
             self.rect_height += 25
             pygame.time.wait(50)
         else:   # show options and leaderboard
+            self.is_expanded = True
             pygame.time.wait(100)
             # show text
             self.game.screen.blit(back_text, (self.game.width // 2 - back_text.get_width() // 2, 725))
@@ -281,12 +284,38 @@ class Gamestate:
         self.game = game
         self.spalte = int(game.width / 24)
         self.zeile = int(game.height / 30)
-        self.score = 0
+        self.game.score = 0
         self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
         self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
         self.inky = Inky(300, 337, self)
         self.pinky = Pinky(345, 337, self)
         self.clyde = Clyde(390, 337, self)
+        
+        
+    def resetGamestate(self):
+        board.resetBoard()
+        self.game = game
+        self.spalte = int(game.width / 24)
+        self.zeile = int(game.height / 30)
+        self.game.score = 0
+        self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
+        self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
+        self.inky = Inky(300, 337, self)
+        self.pinky = Pinky(345, 337, self)
+        self.clyde = Clyde(390, 337, self)
+        
+        
+    def resetGamestate(self):
+        board.resetBoard()
+        self.game = game
+        self.spalte = int(game.width / 24)
+        self.zeile = int(game.height / 30)
+        # Score reset in Enter Name verlagert
+        self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
+        self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
+        self.inky = Inky(300, 337, self)
+        self.pinky = Pinky(345, 337, self)
+        self.clyde = Clyde(390, 337, self)  
 
     def getZeile(self):
         return self.zeile
@@ -328,24 +357,49 @@ class Gamestate:
     def draw_score(self):
         # Show the score in bottom left corner
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
-        text = font.render(f"Score: {self.score}", True, 'white')
+        text = font.render(f"Score: {self.game.score}", True, 'white')
         self.game.screen.blit(text, (15, 735))
         
     def draw_lives(self):
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
         text = font.render(f"Lives: ", True, 'white')
         self.game.screen.blit(text, (400, 735))
-        if self.player.lives == 3:
+        if int(self.player.lives) == 3:
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (1* 50), 735))
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (2* 50), 735))
-        elif self.player.lives == 2:
+        elif int(self.player.lives) == 2:
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (1* 50), 735))
-        elif self.player.lives == 1:
+        elif int(self.player.lives) == 1:
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
+        elif int(self.player.lives) == 0:
+            self.gameOver()
             
-              
+    def gameOver(self):
+        # Hintergrund schwarz
+        pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_death.mp3')
+        pygame.mixer.music.play(1, 0.0)
+        pygame.mixer.music.set_volume(0.2)
+        self.game.screen.fill('black')
+        # Anzeige des "Victory!"-Textes
+        font_defeat = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 100)
+        text_defeat = font_defeat.render("GAME OVER!", True, 'red')
+        text_defeat_rect = text_defeat.get_rect(center=(game.width // 2, game.height // 2 - 100))  # Etwas nach oben verschoben
+        self.game.screen.blit(text_defeat, text_defeat_rect)
+        # Anzeige des Scores
+        font_score = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 80)
+        text_score = font_score.render(f"Score: {self.game.score}", True, 'white')
+        text_score_rect = text_score.get_rect(center=(game.width // 2, game.height // 2 + 100))  # Etwas nach unten verschoben
+        self.game.screen.blit(text_score, text_score_rect)
+        # Bildschirm aktualisieren
+        pygame.display.flip()
+        pygame.time.delay(5000)  # 3 Sekunden warten     
+        board.resetBoard()
+        self.resetGamestate()     
+        self.game.switch_state("main_menu") 
+         
+      
     def victoryScreen(self):
         self.game.screen.fill('black')
         pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_victory.mp3')
@@ -360,37 +414,16 @@ class Gamestate:
 
         # Anzeige des Scores
         font_score = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 100)
-        text_score = font_score.render(f"Score: {self.score}", True, 'white')
+        text_score = font_score.render(f"Score: {self.game.score}", True, 'white')
         text_score_rect = text_score.get_rect(center=(self.game.width // 2, self.game.height // 2 + 100))  # Etwas nach unten verschoben
         self.game.screen.blit(text_score, text_score_rect)
         pygame.display.flip()
+        pygame.time.delay(6000)  # 3 Sekunden warten
+        board.resetBoard()
+        self.resetGamestate()
+        self.game.switch_state("name") 
+                
 
-        pygame.time.delay(3000) # 3 Sekunden warten
-        
-        # Load existing leaderboard data or initialize an empty dictionary if the file doesn't exist
-        with open(f"{self.game.dir_path}/assets/leaderboard.json", "r") as f:
-            try:
-                data = json.load(f)
-            except json.JSONDecodeError:
-                data = {}
-        # Neuen Eintrag für den Spieler erstellen
-        new_entry = {
-            "name": "Player",
-            "score": self.score
-        }
-        # Existierende Einträge um den neuen Eintrag erweitern
-        data[str(len(data))] = [new_entry]
-
-        # Daten in die Datei schreiben
-        if data != {}:
-            with open(f"{self.game.dir_path}/assets/leaderboard.json", "w") as f:
-                json.dump(data, f, indent=4)
-        else:
-            print("An error occurred while writing to the leaderboard file.")
-        
-        self.game.switch_state("name")
-
-            
     def draw(self):
         self.game.screen.fill((0, 0, 0))
         self.drawBoard()
@@ -459,7 +492,6 @@ class EnterName:
         self.letter_1 = 0 # Index für Namenseingabe des zweiten buchstaben => A
         self.letter_2 = 0 # Index für Namenseingabe des dritten buchstaben => A
         self.pointer_pos_x = 300
-        self.name = ""
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -507,8 +539,10 @@ class EnterName:
                             else:
                                 self.letter_2 += 1
                 elif event.key == pygame.K_RETURN: # Enter um zurück ins hauptmenü
-                    self.name = self.alphabet[self.letter_0] + self.alphabet[self.letter_1] + self.alphabet[self.letter_2]
+                    self.game.name = self.alphabet[self.letter_0] + self.alphabet[self.letter_1] + self.alphabet[self.letter_2]
+                    self.write_to_file()
                     self.game.switch_state("main_menu")
+                    self.game.score = 0
     def update(self):
         pass
 
@@ -517,6 +551,28 @@ class EnterName:
         pointer_down = pygame.transform.rotate(pointer_up, 180)
         self.game.screen.blit(pointer_up, (self.pointer_pos_x, 270))
         self.game.screen.blit(pointer_down, (self.pointer_pos_x - 5, 327)) # 5px nach links verschoben, da pfeil sonst wegen rotation nicht zentriert ist
+
+    def write_to_file(self):
+        with open(f"{self.game.dir_path}/assets/leaderboard.json", "r") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = {}
+
+        # Create a new object with the desired elements
+        new_entry = {
+            "name": self.game.name,
+            "score": self.game.score
+        }
+
+        data[len(data)] = [new_entry]
+
+        # Write the updated data back to the JSON file
+        if data != {}:
+            with open(f"{self.game.dir_path}/assets/leaderboard.json", "w") as f:
+                json.dump(data, f, indent=4)
+        else:
+            print("Error occurred trying to write file.")
 
     def draw(self):
         self.game.screen.fill((0, 0, 0))
@@ -620,25 +676,25 @@ class Player:
                 self.arrayX += 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
-                    self.gamestate.score += 10
+                    self.game.score += 10
             elif self.direction == 1 and board.get_boardIJ(self.arrayY, self.arrayX - 1) in (0, 1):  # Links
                 self.targetX -= self.spalte
                 self.arrayX -= 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
-                    self.gamestate.score += 10
+                    self.game.score += 10
             elif self.direction == 2 and board.get_boardIJ(self.arrayY - 1, self.arrayX) in (0, 1):  # Oben
                 self.targetY -= self.zeile
                 self.arrayY -= 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
-                    self.gamestate.score += 10
+                    self.game.score += 10
             elif self.direction == 3 and board.get_boardIJ(self.arrayY + 1, self.arrayX) in (0, 1):  # Unten
                 self.targetY += self.zeile
                 self.arrayY += 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
-                    self.gamestate.score += 10
+                    self.game.score += 10
                 
                 
     def draw(self, screen):
