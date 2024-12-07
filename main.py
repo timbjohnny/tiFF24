@@ -274,6 +274,7 @@ class Gamestate:
         self.inky = Inky(300, 337, self)
         self.pinky = Pinky(345, 337, self)
         self.clyde = Clyde(390, 337, self)
+        self.board = Board()
 
     def getZeile(self):
         return self.zeile
@@ -376,6 +377,7 @@ class Gamestate:
         # Bildschirm aktualisieren
         pygame.display.flip()
         pygame.time.delay(6000)  # 3 Sekunden warten
+        board.resetBoard()
         self.game.switch_state("main_menu") 
                 
 
