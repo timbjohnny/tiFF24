@@ -998,7 +998,7 @@ class Blinky:
         if self.eaten:  # Geist wurde gegessen, bewegt sich zur Box
             if self.x == self.targetX and self.y == self.targetY:
                 start_x, start_y = self.arrayX, self.arrayY
-                goal_x, goal_y = 10, 10  # Zielposition der Box
+                goal_x, goal_y = 11,12  # Zielposition der Box
                 move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
 
                 if move is not None:
@@ -1034,7 +1034,7 @@ class Blinky:
                 self.y = self.targetY
 
         # Geist hat die Box erreicht
-            if (self.arrayX, self.arrayY) == (10, 10):
+            if (self.arrayX, self.arrayY) == (11, 13):
                 self.eaten = False  # Zurück zum normalen Verhalten
                 print("bin da")
 
