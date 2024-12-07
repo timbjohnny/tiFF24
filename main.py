@@ -274,7 +274,19 @@ class Gamestate:
         self.inky = Inky(300, 337, self)
         self.pinky = Pinky(345, 337, self)
         self.clyde = Clyde(390, 337, self)
-        self.board = Board()
+        
+        
+    def resetGamestate(self):
+        board.resetBoard()
+        self.game = game
+        self.spalte = int(game.width / 24)
+        self.zeile = int(game.height / 30)
+        self.score = 0
+        self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
+        self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
+        self.inky = Inky(300, 337, self)
+        self.pinky = Pinky(345, 337, self)
+        self.clyde = Clyde(390, 337, self)  
 
     def getZeile(self):
         return self.zeile
@@ -352,7 +364,9 @@ class Gamestate:
         self.game.screen.blit(text_score, text_score_rect)
         # Bildschirm aktualisieren
         pygame.display.flip()
-        pygame.time.delay(5000)  # 3 Sekunden warten          
+        pygame.time.delay(5000)  # 3 Sekunden warten     
+        board.resetBoard()
+        self.resetGamestate()     
         self.game.switch_state("main_menu") 
          
       
@@ -378,6 +392,7 @@ class Gamestate:
         pygame.display.flip()
         pygame.time.delay(6000)  # 3 Sekunden warten
         board.resetBoard()
+        self.resetGamestate()
         self.game.switch_state("main_menu") 
                 
 
