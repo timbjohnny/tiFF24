@@ -21,6 +21,7 @@ class Game:
         self.running = True
         self.score = 0
         self.dir_path = os.path.dirname(__file__)
+        self.level = 1
 
         self.pacman_images = []
         for i in range(0, 4): 
@@ -106,7 +107,7 @@ class Game:
         self.states = {
             "main_menu": MainMenu(self),
             "leaderboard": Leaderboard(self),
-            "game": Gamestate(self),
+            "select": LevelSelect(self),
             "pause": PauseMenu(self),
             "name": EnterName(self)
         }
@@ -117,8 +118,7 @@ class Game:
         """Switch to a new state by name."""
         self.prev_state = self.current_state
         self.current_state = self.states[state_name]
-        if self.current_state == self.states["game"]:
-            self.states["game"].countdown()
+
 
     def run(self):
         while self.running:
@@ -156,7 +156,7 @@ class MainMenu:
                 if event.key == pygame.K_RETURN:
                     match self.pointer_pos_y:
                         case 450:
-                            self.game.switch_state("game")  # startet spiel
+                            self.game.switch_state("select")  # startet spiel
                         case 525:
                             self.game.switch_state("leaderboard")   # geht ins leaderboard
                         case 600:
@@ -307,10 +307,81 @@ class Leaderboard:
 
         pygame.display.flip()
 
-class Gamestate:
-    def __init__(self, game):
+class LevelSelect:
+    def __init__(self,game):
         self.game = game
-        self.level = 1
+        self.title_font = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 74)
+        self.select_font = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 50)
+        self.pointer_pos_x = 225
+        self.pointer_pos_y = 450
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.game.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    match self.pointer_pos_y:
+                        case 450: 
+                            self.game.level = 1
+                            self.game.states["game"] = Gamestate(self.game, self.game.level)
+                            self.game.switch_state("game")
+                            self.game.states["game"].countdown()
+                        case 525: 
+                            self.game.level = 2
+                            self.game.states["game"] = Gamestate(self.game, self.game.level)
+                            self.game.switch_state("game")
+                            self.game.states["game"].countdown()
+                        case 600: self.game.switch_state("main_menu")
+                elif event.key == pygame.K_UP:
+                    match self.pointer_pos_y:
+                        case 525:
+                            self.pointer_pos_y = 450
+                            self.pointer_pos_x = 225
+                        case 600:
+                            self.pointer_pos_y = 525
+                            self.pointer_pos_x = 225
+                elif event.key == pygame.K_DOWN:
+                    match self.pointer_pos_y:
+                        case 450:
+                            self.pointer_pos_y = 525
+                            self.pointer_pos_x = 225
+                        case 525:
+                            self.pointer_pos_y = 600
+                            self.pointer_pos_x = 150
+
+
+    def update(self):
+        pass
+
+
+    def draw_options(self):
+        # Select Pointer
+        pointer_text = self.select_font.render(">", False, (255,255,255))
+        # Back Text
+        back_text = self.select_font.render("Back to menu", False, (255, 255, 255))
+        # Level 1 Text
+        level1_text = self.select_font.render("Level 1", False, (255, 255, 255))
+        # Level 2 Text
+        level2_text = self.select_font.render("Level 2", False, (255, 255, 255))
+        # Draw Text
+        self.game.screen.blit(back_text, (self.game.width // 2 - back_text.get_width() // 2, 600))
+        self.game.screen.blit(pointer_text, (self.pointer_pos_x, self.pointer_pos_y))
+        self.game.screen.blit(level1_text, (self.game.width // 2 - level1_text.get_width() // 2, 450))
+        self.game.screen.blit(level2_text, (self.game.width // 2 - level2_text.get_width() // 2, 525))
+
+    def draw(self):
+        select_text = self.title_font.render("Select Level", False, (255, 255, 255))
+        self.game.screen.fill((0, 0, 0))
+        self.game.screen.blit(select_text, (self.game.width // 2 - select_text.get_width() // 2, 100))
+        self.draw_options()
+
+        pygame.display.flip()
+
+class Gamestate:
+    def __init__(self, game, level):
+        self.game = game
+        self.level = level
         if self.level == 1:
             self.spalte = int(game.width / 24)
             self.zeile = int(game.height / 30)
@@ -378,7 +449,7 @@ class Gamestate:
         self.blinky.update()
         
     def countdown(self):
-        if self.game.prev_state == self.game.states["main_menu"]:
+        if self.game.prev_state == self.game.states["select"]:
             font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 230)  # Larger font for countdown
             messages = ["Ready", "3", "2", "1", "Go!"]
             pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_beginning.wav')
@@ -745,7 +816,7 @@ class Player:
                 self.arrayY += 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
-                    self.gamestate.score += 10
+                    self.game.score += 10
 
         if self.power_up:
             elapsed_time = pygame.time.get_ticks() - self.start_time
@@ -864,9 +935,6 @@ class Blinky:
             self.x = self.targetX
         if abs(self.y - self.targetY) < self.speed:
             self.y = self.targetY
-    
-        while self.power_up == True:
-            if self.player
             
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
