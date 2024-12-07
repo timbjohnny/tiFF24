@@ -270,7 +270,7 @@ class Gamestate:
         self.zeile = int(game.height / 30)
         self.score = 0
         self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
-        self.blinky = Blinky(345, 283, self)
+        self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
         self.inky = Inky(300, 337, self)
         self.pinky = Pinky(345, 337, self)
         self.clyde = Clyde(390, 337, self)
@@ -294,6 +294,7 @@ class Gamestate:
 
     def update(self):
         self.player.update()
+        self.blinky.update()
         
     def countdown(self):
         if self.game.prev_state == self.game.states["main_menu"]:
@@ -547,16 +548,112 @@ class Blinky:
         self.game = gamestate.game
         self.x = x
         self.y = y
+        self.arrayX = 11
+        self.arrayY = 11
+        self.imageSkip = 0
         self.ghosts_animstate = 0
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
+        self.way = {}
+
+        self.targetX = x
+        self.targetY = y
+        self.speed = 2
+        self.direction = 0
+        self.visited = []
+        self.queue = []
+        self.player = gamestate.getPlayer()
+        self.moveable = []
+        self.lastmove = []
+
+    def update(self):
+        if self.x < self.targetX:
+                self.x += self.speed
+        elif self.x > self.targetX:
+                self.x -= self.speed
+        if self.y < self.targetY:
+                self.y += self.speed
+        elif self.y > self.targetY:
+                self.y -= self.speed
+                
+        if self.x == self.targetX and self.y == self.targetY and self.direction is not None:
+            if board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):  # Rechts
+                self.targetX += self.spalte
+                self.arrayX += 1
 
     def handle_events(self, event):
         pass
 
+    def draw(self, screen):
+        screen.blit(self.game.blinkyR_images[int(self.ghosts_animstate)], (self.x, self.y))
+
+        current_time = pygame.time.get_ticks()  # current time in ms since game started
+        if current_time - self.last_update_time >= 200:
+            self.last_update_time = current_time
+            if self.ghosts_animstate >= len(self.game.blinkyR_images) - 1:
+                self.ghosts_anim_dir = -1
+            elif self.ghosts_animstate <= 0:
+                self.ghosts_anim_dir = 1
+
+            self.ghosts_animstate += 1 * self.ghosts_anim_dir
+    def __init__(self, x, y, gamestate):
+        self.spalte = gamestate.getSpalte()
+        self.zeile = gamestate.getZeile()
+        self.blinky_images = gamestate.game.blinkyR_images
+        self.game = gamestate.game
+        self.x = x
+        self.y = y
+        self.arrayX = 11
+        self.arrayY = 11
+        self.imageSkip = 0
+        self.ghosts_animstate = 0
+        self.ghosts_anim_dir = 1
+        self.last_update_time = 0
+        self.way = {}
+
+        self.targetX = x
+        self.targetY = y
+        self.speed = 2
+        self.direction = 0
+        self.visited = []
+        self.queue = []
+        self.player = gamestate.getPlayer()
+        self.moveable = []
+        self.lastmove = []
+
     def update(self):
+        if self.x < self.targetX:
+                self.x += self.speed
+        elif self.x > self.targetX:
+                self.x -= self.speed
+        if self.y < self.targetY:
+                self.y += self.speed
+        elif self.y > self.targetY:
+                self.y -= self.speed
+                
+        if self.x == self.targetX and self.y == self.targetY and self.direction is not None:
+            if board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):  # Rechts
+                self.targetX += self.spalte
+                self.arrayX += 1
+
+    def handle_events(self, event):
         pass
 
+    def draw(self, screen):
+        screen.blit(self.game.blinkyR_images[int(self.ghosts_animstate)], (self.x, self.y))
+
+        current_time = pygame.time.get_ticks()  # current time in ms since game started
+        if current_time - self.last_update_time >= 200:
+            self.last_update_time = current_time
+            if self.ghosts_animstate >= len(self.game.blinkyR_images) - 1:
+                self.ghosts_anim_dir = -1
+            elif self.ghosts_animstate <= 0:
+                self.ghosts_anim_dir = 1
+
+            self.ghosts_animstate += 1 * self.ghosts_anim_dir
+ 
+
+   
     def draw(self, screen):
         screen.blit(self.game.blinkyR_images[int(self.ghosts_animstate)], (self.x, self.y))
 
