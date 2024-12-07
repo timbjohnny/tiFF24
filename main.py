@@ -580,10 +580,11 @@ class Gamestate:
         if self.invulnerable == False:
             for ghost in self.ghosts:
                 if self.player.arrayX == ghost.arrayX and self.player.arrayY == ghost.arrayY:
-                    self.player.lives -= 1  
-                    self.invulnerable = True
-                    self.invulnerable_start_time = pygame.time.get_ticks()
-                    break
+                    if self.player.power_up == False:
+                        self.player.lives -= 1  
+                        self.invulnerable = True
+                        self.invulnerable_start_time = pygame.time.get_ticks()
+                        break
                 
 
     def draw(self):
@@ -871,7 +872,8 @@ class Player:
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 50
-                    self.power_up = True    
+                    self.power_up = True
+                    self.start_time = pygame.time.get_ticks()  
             elif self.direction == 2 and board.get_boardIJ(self.level, self.arrayY - 1, self.arrayX) in (0, 1,9):  # Oben
                 self.targetY -= self.zeile
                 self.arrayY -= 1
@@ -881,7 +883,8 @@ class Player:
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 50
-                    self.power_up = True    
+                    self.power_up = True
+                    self.start_time = pygame.time.get_ticks()     
             elif self.direction == 3 and board.get_boardIJ(self.level, self.arrayY + 1, self.arrayX) in (0, 1,9):  # Unten
                 self.targetY += self.zeile
                 self.arrayY += 1
@@ -891,7 +894,8 @@ class Player:
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 50
-                    self.power_up = True    
+                    self.power_up = True
+                    self.start_time = pygame.time.get_ticks()    
 
         if self.power_up:
             elapsed_time = pygame.time.get_ticks() - self.start_time
@@ -936,6 +940,8 @@ class Blinky:
         self.direction = None
         self.player = gamestate.getPlayer()
         self.blinky_images = self.game.blinkyR_images
+        self.blinky_vuln = self.game.vulnerable_images
+        self.blinky_vuln_blink = self.game.blinking_images
         self.ghosts_animstate = 0
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
@@ -1064,15 +1070,44 @@ class Blinky:
         # Kein Wechsel von arrayX am linken/rechten Rand
 
     def draw(self, screen):
-        screen.blit(self.blinky_images[int(self.ghosts_animstate)], (self.x, self.y))
+        elapsed_time = pygame.time.get_ticks() - self.player.start_time
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_update_time >= 200:
-            self.last_update_time = current_time
-            if self.ghosts_animstate >= len(self.blinky_images) - 1:
-                self.ghosts_anim_dir = -1
-            elif self.ghosts_animstate <= 0:
-                self.ghosts_anim_dir = 1
-            self.ghosts_animstate += self.ghosts_anim_dir
+        if self.player.power_up == False:
+            screen.blit(self.blinky_images[int(self.ghosts_animstate)], (self.x, self.y))
+            current_time = pygame.time.get_ticks()
+            if current_time - self.last_update_time >= 200:
+                self.last_update_time = current_time
+                if self.ghosts_animstate >= len(self.blinky_images) - 1:
+                    self.ghosts_anim_dir = -1
+                elif self.ghosts_animstate <= 0:
+                    self.ghosts_anim_dir = 1
+                self.ghosts_animstate += self.ghosts_anim_dir
+        else:
+            if elapsed_time < 7000:
+                screen.blit(self.blinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))
+                current_time = pygame.time.get_ticks()
+                if current_time - self.last_update_time >= 200:
+                    self.last_update_time = current_time
+                    if self.ghosts_animstate >= len(self.blinky_vuln) - 1:
+                        self.ghosts_anim_dir = -1
+                    elif self.ghosts_animstate <= 0:
+                        self.ghosts_anim_dir = 1
+                    self.ghosts_animstate += self.ghosts_anim_dir
+            else:
+                blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
+                if blink_time == 0:
+                    screen.blit(self.blinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                else:
+                    screen.blit(self.blinky_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
+                if current_time - self.last_update_time >= 200:
+                    self.last_update_time = current_time
+                    if self.ghosts_animstate >= len(self.blinky_vuln) - 1:
+                        self.ghosts_anim_dir = -1
+                    elif self.ghosts_animstate <= 0:
+                        self.ghosts_anim_dir = 1
+                    self.ghosts_animstate += self.ghosts_anim_dir
+                        
+                    
     
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
