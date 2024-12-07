@@ -109,7 +109,8 @@ class Game:
             "leaderboard": Leaderboard(self),
             "select": LevelSelect(self),
             "pause": PauseMenu(self),
-            "name": EnterName(self)
+            "name": EnterName(self),
+            "level_editor": LevelEditor(self)
         }
         self.current_state = self.states["main_menu"]
         self.prev_state = None
@@ -177,6 +178,8 @@ class MainMenu:
                                 self.pointer_pos_x = 140
                             case 600:   # pointer auf "Quit"
                                 self.pointer_pos_x = 260
+                elif event.key == pygame.K_l:
+                    self.game.switch_state("level_editor")
 
 
 
@@ -223,6 +226,40 @@ class MainMenu:
             self.ghosts_animstate += 1 * self.ghosts_anim_dir
             
 
+        pygame.display.flip()
+
+class LevelEditor:
+    def __init__(self,game):
+        self.game = game
+        self.rows = 0
+        self.cols = 0
+        self.cell_width = 10
+        self.cell_height = 10
+        self.board = []
+        self.grid = None
+
+    def select_size(self):
+        self.rows = int(input("Enter number of rows: "))
+        self.cols = int(input("Enter number of columns: "))
+        self.cell_width = self.game.width // self.cols
+        self.cell_height = self.game.height // self.rows
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.game.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    self.game.switch_state("main_menu")
+
+    def update(self):
+        pass
+
+    def draw(self):
+        self.game.screen.fill((0, 0, 0))
+        if self.rows == 0 and self.cols == 0:
+            self.select_size()
+        self.draw_board()
         pygame.display.flip()
 
 class Leaderboard:
@@ -511,7 +548,7 @@ class Gamestate:
         pygame.display.flip()
         pygame.time.delay(5000)  # 3 Sekunden warten     
         self.resetGamestate()     
-        self.game.switch_state("main_menu") 
+        self.game.switch_state("name") 
          
       
     def victoryScreen(self):
