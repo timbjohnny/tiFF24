@@ -54,7 +54,6 @@ class Board:
         [3, 1, 3, 3, 1, 6, 4, 8, 7, 4, 5, 1, 3, 3, 1, 3],
         [3, 1, 7, 8, 1, 7, 4, 4, 4, 4, 8, 1, 7, 8, 1, 3],
         [3, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 3],
-        [3, 1, 6, 4, 4, 5, 1, 6, 5, 1, 6, 4, 4, 5, 1, 3],
         [7, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 8]  
         ]
         self.dir_path = os.path.dirname(__file__)
@@ -109,18 +108,18 @@ class Board:
                             break                              
                     if foodFound:
                         break
-                    if not foodFound:
-                        victory = True
+            if not foodFound:
+                victory = True
         elif lvl == 2:
-            for i in range(len(self.boards2)):
-                    for j in range(len(self.boards2[i])):
-                        if self.boards2[i][j] == 1:
+            for k in range(len(self.boards2)):
+                    for l in range(len(self.boards2[k])):
+                        if self.boards2[k][l] == 1:
                             foodFound = True
                             break                              
                     if foodFound:
                         break
-                    if not foodFound:
-                        victory = True
+            if not foodFound:
+                victory = True
                         
         return victory        
     
