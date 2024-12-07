@@ -310,7 +310,7 @@ class Leaderboard:
 class Gamestate:
     def __init__(self, game):
         self.game = game
-        self.level = 2
+        self.level = 1
         if self.level == 1:
             self.spalte = int(game.width / 24)
             self.zeile = int(game.height / 30)
@@ -493,6 +493,8 @@ class Gamestate:
                     pygame.draw.arc(self.game.screen, 'blue', [(j*self.spalte + 0.5*self.spalte), (i*self.zeile - 0.4*self.zeile) - 2, self.spalte, self.zeile], pi, 3*(pi/2), 3)
                 elif val == 8: # Kurve oben links
                     pygame.draw.arc(self.game.screen, 'blue', [(j*self.spalte - 0.5*self.spalte) , (i*self.zeile - 0.5*self.zeile)+1, self.spalte, self.zeile], 3*(pi/2), 2*pi, 3)
+                elif val == 9: # Power
+                     pygame.draw.circle(self.game.screen, 'white', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + (0.5*self.zeile)), 8)
 
 
 class PauseMenu:
@@ -649,6 +651,7 @@ class Player:
         self.direction = 0
         self.buffer_direction = 0
         self.lives = 3
+        self.power_up = False
         self.move_event = pygame.USEREVENT + 1
         pygame.time.set_timer(self.move_event, 180)
         
@@ -713,31 +716,36 @@ class Player:
                 self.arrayX = len(board.get_boardI(self.level, self.arrayY)) - 1
                 self.x = self.spalte * len(board.get_boardI(self.level, self.arrayY))
                 self.targetX = (self.spalte - 1) * len(board.get_boardI(self.level, self.arrayY))
-            if self.direction == 0 and board.get_boardIJ(self.level, self.arrayY, self.arrayX + 1) in (0, 1):  # Rechts
+            if self.direction == 0 and board.get_boardIJ(self.level, self.arrayY, self.arrayX + 1) in (0, 1,9):  # Rechts
                 self.targetX += self.spalte
                 self.arrayX += 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 10
-            elif self.direction == 1 and board.get_boardIJ(self.level, self.arrayY, self.arrayX - 1) in (0, 1):  # Links
+                if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
+                    board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
+                    self.game.score += 50
+            elif self.direction == 1 and board.get_boardIJ(self.level, self.arrayY, self.arrayX - 1) in (0, 1,9):  # Links
                 self.targetX -= self.spalte
                 self.arrayX -= 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 10
-            elif self.direction == 2 and board.get_boardIJ(self.level, self.arrayY - 1, self.arrayX) in (0, 1):  # Oben
+            elif self.direction == 2 and board.get_boardIJ(self.level, self.arrayY - 1, self.arrayX) in (0, 1,9):  # Oben
                 self.targetY -= self.zeile
                 self.arrayY -= 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 10
-            elif self.direction == 3 and board.get_boardIJ(self.level, self.arrayY + 1, self.arrayX) in (0, 1):  # Unten
+            elif self.direction == 3 and board.get_boardIJ(self.level, self.arrayY + 1, self.arrayX) in (0, 1,9):  # Unten
                 self.targetY += self.zeile
                 self.arrayY += 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 10
                 
+
+            
     def draw(self, screen):
         if self.imageSkip < 3.75:
             self.imageSkip += 0.25
@@ -776,6 +784,7 @@ class Blinky:
         self.ghosts_animstate = 0
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
+    
 
     def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
         rows = len(board.get_board(self.level))
@@ -810,11 +819,10 @@ class Blinky:
                 next_x = curren_x + dx
                 next_y = curren_y + dy
 
-                # Kein Wrap-Around:
                 # Prüfe, ob next_x in [0, cols-1] und next_y\ in [0, rows-1] liegen
                 if 0 <= next_x < cols and 0 <= next_y < rows:
                     cell = board.get_boardIJ(self.level, next_y, next_x)
-                    if cell in (0,1,2) and (next_y, next_x) not in visited:
+                    if cell in (0,1,2,9) and (next_y, next_x) not in visited:
                         visited.add((next_y, next_x))
                         parent[(next_x, next_y)] = (curren_x, curren_y)
                         queue.append((next_x, next_y))

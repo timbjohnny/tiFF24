@@ -27,7 +27,7 @@ class Board:
         [3, 1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 3, 3, 1, 1, 1, 3, 3, 1, 1, 1, 1, 1, 3],
         [3, 1, 6, 4, 5, 1, 3, 3, 1, 6, 4, 8, 7, 4, 5, 1, 3, 3, 1, 6, 4, 5, 1, 3],
         [3, 1, 7, 4, 8, 1, 7, 8, 1, 7, 4, 4, 4, 4, 8, 1, 7, 8, 1, 7, 4, 8, 1, 3],
-        [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3],
+        [3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 9, 1, 1, 1, 1, 1, 1, 1, 1, 3],
         [3, 1, 6, 4, 5, 1, 6, 4, 4, 5, 1, 6, 5, 1, 6, 4, 4, 5, 1, 6, 4, 5, 1, 3],
         [3, 1, 3, 0, 3, 1, 3, 0, 0, 3, 1, 3, 3, 1, 3, 0, 0, 3, 1, 3, 0, 3, 1, 3],
         [3, 1, 7, 4, 8, 1, 7, 4, 4, 8, 1, 3, 3, 1, 7, 4, 4, 8, 1, 7, 4, 8, 1, 3],
@@ -91,12 +91,16 @@ class Board:
             if self.boards1[i][j] == 1 and newValue == 0:
                 self.play_chomp_sound()
                 self.boards1[i][j] = newValue
-                
+            elif self.boards1[i][j] == 9 and newValue == 0:
+                self.play_chomp_sound()
+                self.boards1[i][j] = newValue
         elif lvl == 2:
             if self.boards2[i][j] == 1 and newValue == 0:
                 self.play_chomp_sound()
                 self.boards2[i][j] = newValue
-           
+            elif self.boards1[i][j] == 9 and newValue == 0:
+                self.play_chomp_sound()
+                self.boards1[i][j] = newValue
 
     def checkVictory(self, lvl):
         victory = False
