@@ -98,9 +98,9 @@ class Board:
             if self.boards2[i][j] == 1 and newValue == 0:
                 self.play_chomp_sound()
                 self.boards2[i][j] = newValue
-            elif self.boards1[i][j] == 9 and newValue == 0:
+            elif self.boards2[i][j] == 9 and newValue == 0:
                 self.play_chomp_sound()
-                self.boards1[i][j] = newValue
+                self.boards2[i][j] = newValue
 
     def checkVictory(self, lvl):
         victory = False
