@@ -319,18 +319,26 @@ class Gamestate:
     def resetGamestate(self):
         board.resetBoard()
         self.game = game
+        self.level = 2
         if self.level == 1:
             self.spalte = int(game.width / 24)
             self.zeile = int(game.height / 30)
         elif self.level == 2:
             self.spalte = int(game.width / 16)
-            self.zeile = int(game.height / 22) 
+            self.zeile = int(game.height / 22)    
         self.score = 0
-        self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
-        self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
-        self.inky = Inky(300, 337, self)
-        self.pinky = Pinky(345, 337, self)
-        self.clyde = Clyde(390, 337, self)  
+        if self.level == 1:
+            self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
+            self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
+            self.inky = Inky(300, 337, self)
+            self.pinky = Pinky(345, 337, self)
+            self.clyde = Clyde(390, 337, self)
+        elif self.level == 2:
+            self.player = Player(7* self.spalte, 17*self.zeile, self) # x,y Startposition
+            self.blinky = Blinky(7*self.spalte, 7*self.zeile, self)
+            self.inky = Inky(300, 337, self)
+            self.pinky = Pinky(345, 337, self)
+            self.clyde = Clyde(390, 337, self) 
     
     def getLevel(self):
         return self.level
@@ -411,7 +419,6 @@ class Gamestate:
         # Bildschirm aktualisieren
         pygame.display.flip()
         pygame.time.delay(5000)  # 3 Sekunden warten     
-        board.resetBoard()
         self.resetGamestate()     
         self.game.switch_state("main_menu") 
          
@@ -434,6 +441,7 @@ class Gamestate:
 
         pygame.display.flip()
         pygame.time.delay(6000)  # 3 Sekunden warten
+        self.resetGamestate() 
         self.game.switch_state("main_menu") 
                 
 
@@ -626,11 +634,11 @@ class Player:
 
 class Blinky:
     def __init__(self, x, y, gamestate):
-        self.spalte = gamestate.getSpalte()
-        self.zeile = gamestate.getZeile()
-        self.game = gamestate.game
-        self.level = gamestate.getLevel()
         self.gamestate = gamestate
+        self.spalte = self.gamestate.getSpalte()
+        self.zeile = self.gamestate.getZeile()
+        self.game = self.gamestate.game
+        self.level = self.gamestate.getLevel()
         self.x = x
         self.y = y
         if self.level == 1:
