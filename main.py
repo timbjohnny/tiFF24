@@ -534,8 +534,9 @@ class Player:
         self.power_up = False
         self.move_event = pygame.USEREVENT + 1
         pygame.time.set_timer(self.move_event, 180)
-        
-        
+        self.start_time = pygame.time.get_ticks()  # Startzeit
+        self.timer_duration = 18000  # 10 Sekunden in Millisekunden
+
     def handle_events(self, event):
         """Verarbeitet Tasteneingaben."""
         if event.type == pygame.KEYDOWN:
@@ -605,6 +606,8 @@ class Player:
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.gamestate.score += 50
+                    self.power_up = True
+
             elif self.direction == 1 and board.get_boardIJ(self.level, self.arrayY, self.arrayX - 1) in (0, 1,9):  # Links
                 self.targetX -= self.spalte
                 self.arrayX -= 1
@@ -623,7 +626,12 @@ class Player:
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.gamestate.score += 10
-                
+
+        if self.power_up:
+            elapsed_time = pygame.time.get_ticks() - self.start_time
+            if elapsed_time >= self.timer_duration:
+                print("Power-Up abgelaufen!")
+                self.power_up = False         
 
             
     def draw(self, screen):
