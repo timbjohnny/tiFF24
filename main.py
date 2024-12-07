@@ -892,7 +892,7 @@ class Blinky:
             self.y = self.targetY
     
         if self.gamestate.player.power_up == True:
-            if (self.x,self.y) == (self.player.x, self.player.y):
+            if (self.arrayX,self.arrayY) == (self.player.arrayX, self.player.arrayY):
                 print("tot")
 
     
