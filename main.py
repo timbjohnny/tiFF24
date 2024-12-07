@@ -898,6 +898,13 @@ class Blinky:
             self.y += self.speed
         elif self.y > self.targetY:
             self.y -= self.speed
+            
+        # Runde Positionen ab, wenn Ziel erreicht
+        if abs(self.x - self.targetX) < self.speed:
+            self.x = self.targetX
+        if abs(self.y - self.targetY) < self.speed:
+            self.y = self.targetY
+    
 
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
