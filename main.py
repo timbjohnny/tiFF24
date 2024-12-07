@@ -543,10 +543,11 @@ class Gamestate:
         if self.invulnerable == False:
             for ghost in self.ghosts:
                 if self.player.arrayX == ghost.arrayX and self.player.arrayY == ghost.arrayY:
-                    self.player.lives -= 1  
-                    self.invulnerable = True
-                    self.invulnerable_start_time = pygame.time.get_ticks()
-                    break
+                    if self.player.power_up == False:
+                        self.player.lives -= 1  
+                        self.invulnerable = True
+                        self.invulnerable_start_time = pygame.time.get_ticks()
+                        break
                 
 
     def draw(self):
