@@ -831,18 +831,30 @@ class Player:
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 10
+                if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
+                    board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
+                    self.game.score += 50
+                    self.power_up = True    
             elif self.direction == 2 and board.get_boardIJ(self.level, self.arrayY - 1, self.arrayX) in (0, 1,9):  # Oben
                 self.targetY -= self.zeile
                 self.arrayY -= 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 10
+                if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
+                    board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
+                    self.game.score += 50
+                    self.power_up = True    
             elif self.direction == 3 and board.get_boardIJ(self.level, self.arrayY + 1, self.arrayX) in (0, 1,9):  # Unten
                 self.targetY += self.zeile
                 self.arrayY += 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 10
+                if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
+                    board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
+                    self.game.score += 50
+                    self.power_up = True    
 
         if self.power_up:
             elapsed_time = pygame.time.get_ticks() - self.start_time
