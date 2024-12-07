@@ -531,6 +531,7 @@ class Player:
         self.direction = 0
         self.buffer_direction = 0
         self.lives = 3
+        self.power_up = False
         self.move_event = pygame.USEREVENT + 1
         pygame.time.set_timer(self.move_event, 180)
         
@@ -595,25 +596,28 @@ class Player:
                 self.arrayX = len(board.get_boardI(self.level, self.arrayY)) - 1
                 self.x = self.spalte * len(board.get_boardI(self.level, self.arrayY))
                 self.targetX = (self.spalte - 1) * len(board.get_boardI(self.level, self.arrayY))
-            if self.direction == 0 and board.get_boardIJ(self.level, self.arrayY, self.arrayX + 1) in (0, 1):  # Rechts
+            if self.direction == 0 and board.get_boardIJ(self.level, self.arrayY, self.arrayX + 1) in (0, 1,9):  # Rechts
                 self.targetX += self.spalte
                 self.arrayX += 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.gamestate.score += 10
-            elif self.direction == 1 and board.get_boardIJ(self.level, self.arrayY, self.arrayX - 1) in (0, 1):  # Links
+                if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
+                    board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
+                    self.gamestate.score += 50
+            elif self.direction == 1 and board.get_boardIJ(self.level, self.arrayY, self.arrayX - 1) in (0, 1,9):  # Links
                 self.targetX -= self.spalte
                 self.arrayX -= 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.gamestate.score += 10
-            elif self.direction == 2 and board.get_boardIJ(self.level, self.arrayY - 1, self.arrayX) in (0, 1):  # Oben
+            elif self.direction == 2 and board.get_boardIJ(self.level, self.arrayY - 1, self.arrayX) in (0, 1,9):  # Oben
                 self.targetY -= self.zeile
                 self.arrayY -= 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.gamestate.score += 10
-            elif self.direction == 3 and board.get_boardIJ(self.level, self.arrayY + 1, self.arrayX) in (0, 1):  # Unten
+            elif self.direction == 3 and board.get_boardIJ(self.level, self.arrayY + 1, self.arrayX) in (0, 1,9):  # Unten
                 self.targetY += self.zeile
                 self.arrayY += 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
@@ -660,6 +664,7 @@ class Blinky:
         self.ghosts_animstate = 0
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
+    
 
     def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
         rows = len(board.get_board(self.level))
@@ -725,7 +730,7 @@ class Blinky:
             self.y += self.speed
         elif self.y > self.targetY:
             self.y -= self.speed
-
+        
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
 

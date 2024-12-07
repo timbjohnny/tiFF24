@@ -86,27 +86,21 @@ class Board:
         channel.play(self.chomp_sound)
         self.current_channel = (self.current_channel + 1) % len(self.channels)
 
-<<<<<<< HEAD
-    def set_boardXY(self, i, j, newValue):
-        if self.boards[i][j] == 1 and newValue == 0:
-            self.play_chomp_sound()
-            self.boards[i][j] = newValue   
-        elif self.boards[i][j] == 9 and newValue == 0:
-            self.play_chomp_sound()
-        self.boards[i][j] = newValue 
-=======
     def set_boardXY(self, lvl, i, j, newValue):
         if lvl == 1:
             if self.boards1[i][j] == 1 and newValue == 0:
                 self.play_chomp_sound()
                 self.boards1[i][j] = newValue
-                
+            elif self.boards1[i][j] == 9 and newValue == 0:
+                self.play_chomp_sound()
+                self.boards1[i][j] = newValue
         elif lvl == 2:
-            if self.boards2[i][j] == 1 and newValue == 0:
+            if self.boards2[i][j] == 9 and newValue == 0:
                 self.play_chomp_sound()
                 self.boards2[i][j] = newValue
-           
->>>>>>> c44c7ffa42e22228d05ade76bb667a6ed1bf9f66
+            elif self.boards1[i][j] == 9 and newValue == 0:
+                self.play_chomp_sound()
+                self.boards1[i][j] = newValue
 
     def checkVictory(self, lvl):
         victory = False
