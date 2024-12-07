@@ -296,9 +296,9 @@ class Gamestate:
         
     def countdown(self):
         if self.game.prev_state == self.game.states["main_menu"]:
-            font = pygame.font.Font('assets/MinecraftRegular-Bmg3.otf', 230)  # Larger font for countdown
+            font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 230)  # Larger font for countdown
             messages = ["Ready", "3", "2", "1", "Go!"]
-            pygame.mixer.music.load('sounds/pacman_beginning.wav')
+            pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_beginning.wav')
             pygame.mixer.music.play(0, 0.0)
             pygame.mixer.music.set_volume(0.2)
             for message in(messages):
@@ -312,12 +312,12 @@ class Gamestate:
                 
     def victoryScreen(self):
         self.game.screen.fill('black')
-        pygame.mixer.music.load('sounds/pacman_victory.mp3')
+        pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_victory.mp3')
         pygame.mixer.music.play(1, 0.0)
         pygame.mixer.music.set_volume(0.2)
 
         # Anzeige des "Victory!"-Textes
-        font_victory = pygame.font.Font('assets/MinecraftRegular-Bmg3.otf', 150)
+        font_victory = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 150)
         text_victory = font_victory.render("Victory!", True, 'yellow')
         text_victory_rect = text_victory.get_rect(center=(game.width // 2, game.height // 2 - 100))  # Etwas nach oben verschoben
         self.game.screen.blit(text_victory, text_victory_rect)
@@ -366,7 +366,7 @@ class Gamestate:
 class PauseMenu:
     def __init__(self, game):
         self.game = game
-        self.title_font = pygame.font.Font("assets/MinecraftRegular-Bmg3.otf", 74)
+        self.title_font = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 74)
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -381,7 +381,7 @@ class PauseMenu:
 
     def draw(self):
         pause_text = self.title_font.render("Paused", True, (200, 200, 200))
-        instruction_text = pygame.font.Font("assets/MinecraftRegular-Bmg3.otf", 36).render("Press ESC to Resume", True, (200, 200, 200))
+        instruction_text = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 36).render("Press ESC to Resume", True, (200, 200, 200))
         self.game.screen.blit(pause_text, (self.game.width // 2 - pause_text.get_width() // 2, 150))
         self.game.screen.blit(instruction_text, (self.game.width // 2 - instruction_text.get_width() // 2, 300))
         pygame.display.flip()
