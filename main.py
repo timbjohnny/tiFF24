@@ -336,11 +336,23 @@ class Gamestate:
 
     def draw(self):
         self.game.screen.fill((0, 0, 0))
+        self.drawBoard()
+        self.drawLives()
+        self.player.draw(self.game.screen)
+        self.blinky.draw(self.game.screen)
+        self.inky.draw(self.game.screen)
+        self.pinky.draw(self.game.screen)
+        self.clyde.draw(self.game.screen)
+        if board.checkVictory() == True:
+            self.victoryScreen()            
+        pygame.display.flip()
+    
+    def drawBoard(self):    
         for i in range(len(board.get_board())):
             for j in range(len(board.get_boardI(i))):
                 if board.get_boardIJ(i,j) == 1: #Auf dem Feld ist ein Punkt zum Essen
                     pygame.draw.circle(game.screen, 'white', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + (0.5*self.zeile)), 4)
-                elif board.get_boardIJ(i,j) == 2: # Horizonatale Wand
+                elif board.get_boardIJ(i,j) == 2: # Horizontale Wand
                     pygame.draw.line(game.screen, 'white', ((j*self.spalte),(i*self.zeile) + (0.5*self.zeile)), ((j*self.spalte) + self.spalte,(i*self.zeile) + (0.5*self.zeile)), 1)
                 elif board.get_boardIJ(i,j) == 3: #Vertikale Wand
                     pygame.draw.line(game.screen, 'blue', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile)), ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + self.zeile), 3)
@@ -354,14 +366,9 @@ class Gamestate:
                     pygame.draw.arc(game.screen, 'blue', [(j*self.spalte + 0.5*self.spalte), (i*self.zeile - 0.4*self.zeile) - 2, self.spalte, self.zeile], pi, 3*(pi/2), 3)
                 elif board.get_boardIJ(i,j) == 8: # Kurve oben links
                     pygame.draw.arc(game.screen, 'blue', [(j*self.spalte - 0.5*self.spalte) , (i*self.zeile - 0.5*self.zeile)+1, self.spalte, self.zeile], 3*(pi/2), 2*pi, 3)
-        self.player.draw(self.game.screen)
-        self.blinky.draw(self.game.screen)
-        self.inky.draw(self.game.screen)
-        self.pinky.draw(self.game.screen)
-        self.clyde.draw(self.game.screen)
-        if board.checkVictory():
-            self.victoryScreen()            
-        pygame.display.flip()
+                    
+    #def drawLives():
+                        
 
 class PauseMenu:
     def __init__(self, game):
@@ -403,6 +410,7 @@ class Player:
         self.imageSkip = 0
         self.direction = 0
         self.buffer_direction = 0
+        self.lives = 3
         self.move_event = pygame.USEREVENT + 1  # Benutzerdefiniertes Ereignis für die Bewegung
         pygame.time.set_timer(self.move_event, 180)  # Timer setzen: jede Sekunde ein Ereignis
         
@@ -427,7 +435,6 @@ class Player:
                     self.arrayX= 0
                     self.x = -self.spalte
                     self.targetX = 0
-                    print("aa" + str(self.arrayX))
                 if board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):
                     self.direction = 0
             case 1: # Left

@@ -38,7 +38,7 @@ class Board:
         self.dir_path = os.path.dirname(__file__)
         self.channels = [pygame.mixer.Channel(i) for i in range(2)]
         self.current_channel = 0
-        self.chomp_sound = pygame.mixer.Sound(f'{self.dir_path}/tiFF24/sounds/pacman_chomp.wav')
+        self.chomp_sound = pygame.mixer.Sound(f'{self.dir_path}/sounds/pacman_chomp.wav')
         self.chomp_sound.set_volume(0.1)
     def get_board(self):
         return self.boards    
