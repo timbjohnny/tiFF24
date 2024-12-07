@@ -454,6 +454,8 @@ class Gamestate:
                     pygame.draw.arc(self.game.screen, 'blue', [(j*self.spalte + 0.5*self.spalte), (i*self.zeile - 0.4*self.zeile) - 2, self.spalte, self.zeile], pi, 3*(pi/2), 3)
                 elif val == 8: # Kurve oben links
                     pygame.draw.arc(self.game.screen, 'blue', [(j*self.spalte - 0.5*self.spalte) , (i*self.zeile - 0.5*self.zeile)+1, self.spalte, self.zeile], 3*(pi/2), 2*pi, 3)
+                elif val == 9: # Power
+                     pygame.draw.circle(self.game.screen, 'white', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + (0.5*self.zeile)), 8)
 
 
 class PauseMenu:
@@ -521,16 +523,16 @@ class Player:
                     self.arrayX= 0
                     self.x = -self.spalte
                     self.targetX = 0
-                if board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):
+                if board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1,9):
                     self.direction = 0
             case 1: # Left
-                if board.get_boardIJ(self.arrayY, self.arrayX - 1) in (0, 1):
+                if board.get_boardIJ(self.arrayY, self.arrayX - 1) in (0, 1,9):
                     self.direction = 1
             case 2: # Up
-                if board.get_boardIJ(self.arrayY - 1, self.arrayX) in (0, 1):
+                if board.get_boardIJ(self.arrayY - 1, self.arrayX) in (0, 1,9):
                     self.direction = 2
             case 3: # Down
-                if board.get_boardIJ(self.arrayY + 1, self.arrayX) in (0, 1):
+                if board.get_boardIJ(self.arrayY + 1, self.arrayX) in (0, 1,9):
                     self.direction = 3
 
     def update(self):
@@ -561,31 +563,36 @@ class Player:
                 self.arrayX = len(board.get_boardI(self.arrayY)) - 1
                 self.x = self.spalte * len(board.get_boardI(self.arrayY))
                 self.targetX = (self.spalte - 1) * len(board.get_boardI(self.arrayY))
-            if self.direction == 0 and board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):  # Rechts
+            if self.direction == 0 and board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1,9):  # Rechts
                 self.targetX += self.spalte
                 self.arrayX += 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
                     self.gamestate.score += 10
-            elif self.direction == 1 and board.get_boardIJ(self.arrayY, self.arrayX - 1) in (0, 1):  # Links
+                if board.get_boardIJ(self.arrayY,self.arrayX) == 9:
+                    board.set_boardXY(self.arrayY, self.arrayX, 0)
+                    self.gamestate.score += 50
+            elif self.direction == 1 and board.get_boardIJ(self.arrayY, self.arrayX - 1) in (0, 1,9):  # Links
                 self.targetX -= self.spalte
                 self.arrayX -= 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
                     self.gamestate.score += 10
-            elif self.direction == 2 and board.get_boardIJ(self.arrayY - 1, self.arrayX) in (0, 1):  # Oben
+            elif self.direction == 2 and board.get_boardIJ(self.arrayY - 1, self.arrayX) in (0, 1,9):  # Oben
                 self.targetY -= self.zeile
                 self.arrayY -= 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
                     self.gamestate.score += 10
-            elif self.direction == 3 and board.get_boardIJ(self.arrayY + 1, self.arrayX) in (0, 1):  # Unten
+            elif self.direction == 3 and board.get_boardIJ(self.arrayY + 1, self.arrayX) in (0,1,9):  # Unten
                 self.targetY += self.zeile
                 self.arrayY += 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
                     self.gamestate.score += 10
                 
+
+            
     def draw(self, screen):
         if self.imageSkip < 3.75:
             self.imageSkip += 0.25
@@ -653,7 +660,6 @@ class Blinky:
                 next_x = curren_x + dx
                 next_y = curren_y + dy
 
-                # Kein Wrap-Around:
                 # Prüfe, ob next_x in [0, cols-1] und next_y\ in [0, rows-1] liegen
                 if 0 <= next_x < cols and 0 <= next_y < rows:
                     cell = board.get_boardIJ(next_y, next_x)
