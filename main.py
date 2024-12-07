@@ -1003,16 +1003,6 @@ class Blinky:
 
                 if move is not None:
                     dx, dy = move
-                    match dx:
-                        case 1:
-                            self.blinky_images = self.game.blinkyR_images
-                        case -1:
-                            self.blinky_images = [pygame.transform.flip(self.game.blinkyR_images[i], True, False) for i in range(2)]
-                    match dy:
-                        case 1:
-                            self.blinky_images = self.game.blinkyD_images
-                        case -1:
-                            self.blinky_images = self.game.blinkyU_images
                     self.arrayX += dx
                     self.arrayY += dy
                     self.targetX = self.arrayX * self.spalte
@@ -1079,6 +1069,16 @@ class Blinky:
 
                 if move is not None:
                     dx, dy = move
+                    match dx:
+                        case 1:
+                            self.blinky_images = self.game.blinkyR_images
+                        case -1:
+                            self.blinky_images = [pygame.transform.flip(self.game.blinkyR_images[i], True, False) for i in range(2)]
+                    match dy:
+                        case 1:
+                            self.blinky_images = self.game.blinkyD_images
+                        case -1:
+                            self.blinky_images = self.game.blinkyU_images
                     self.arrayX += dx
                     self.arrayY += dy
                     self.targetX = self.arrayX * self.spalte
