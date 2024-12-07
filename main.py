@@ -789,7 +789,7 @@ class Player:
         self.move_event = pygame.USEREVENT + 1
         pygame.time.set_timer(self.move_event, 180)
         self.start_time = pygame.time.get_ticks()  # Startzeit
-        self.timer_duration = 18000  # 10 Sekunden in Millisekunden
+        self.timer_duration = 10000  # 10 Sekunden in Millisekunden
 
     def handle_events(self, event):
         """Verarbeitet Tasteneingaben."""
@@ -861,31 +861,44 @@ class Player:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 50
                     self.power_up = True
-
+                    self.start_time = pygame.time.get_ticks()  
             elif self.direction == 1 and board.get_boardIJ(self.level, self.arrayY, self.arrayX - 1) in (0, 1,9):  # Links
                 self.targetX -= self.spalte
                 self.arrayX -= 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 10
+                if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
+                    board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
+                    self.game.score += 50
+                    self.power_up = True    
             elif self.direction == 2 and board.get_boardIJ(self.level, self.arrayY - 1, self.arrayX) in (0, 1,9):  # Oben
                 self.targetY -= self.zeile
                 self.arrayY -= 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 10
+                if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
+                    board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
+                    self.game.score += 50
+                    self.power_up = True    
             elif self.direction == 3 and board.get_boardIJ(self.level, self.arrayY + 1, self.arrayX) in (0, 1,9):  # Unten
                 self.targetY += self.zeile
                 self.arrayY += 1
                 if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
                     self.game.score += 10
+                if board.get_boardIJ(self.level, self.arrayY, self.arrayX) == 9:
+                    board.set_boardXY(self.level, self.arrayY, self.arrayX, 0)
+                    self.game.score += 50
+                    self.power_up = True    
 
         if self.power_up:
             elapsed_time = pygame.time.get_ticks() - self.start_time
             if elapsed_time >= self.timer_duration:
                 print("Power-Up abgelaufen!")
-                self.power_up = False         
+                self.power_up = False
+
 
        
     def draw(self, screen):
@@ -971,38 +984,70 @@ class Blinky:
         
         return None
 
+
     def update(self):
-        if self.x == self.targetX and self.y == self.targetY:
-            start_x, start_y = self.arrayX, self.arrayY
-            goal_x, goal_y = self.player.arrayX, self.player.arrayY
-            move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
-            
-            if move is not None:
-                dx, dy = move
-                self.arrayX += dx
-                self.arrayY += dy
-                self.targetX = self.arrayX * self.spalte
-                self.targetY = self.arrayY * self.zeile
+        rows = len(board.get_board(self.level))
+        cols = len(board.get_boardI(self.level, 0))
+        if self.gamestate.player.power_up == False:
+            if self.x == self.targetX and self.y == self.targetY:
+                start_x, start_y = self.arrayX, self.arrayY
+                goal_x, goal_y = self.player.arrayX, self.player.arrayY
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
 
-        if self.x < self.targetX:
-            self.x += self.speed
-        elif self.x > self.targetX:
-            self.x -= self.speed
-        if self.y < self.targetY:
-            self.y += self.speed
-        elif self.y > self.targetY:
-            self.y -= self.speed
-            
-        # Runde Positionen ab, wenn Ziel erreicht
-        if abs(self.x - self.targetX) < self.speed:
-            self.x = self.targetX
-        if abs(self.y - self.targetY) < self.speed:
-            self.y = self.targetY
-    
-        if self.gamestate.player.power_up == True:
-            if (self.arrayX,self.arrayY) == (self.player.arrayX, self.player.arrayY):
-                print("tot")
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
 
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+#Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+            
+        else:
+            if self.x == self.targetX and self.y == self.targetY:
+                start_x, start_y = self.arrayX, self.arrayY
+                goal_x, goal_y = abs(rows-self.player.arrayX), abs(cols-self.player.arrayY)
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+#Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+            if self.gamestate.player.power_up == True:
+                if (self.arrayX,self.arrayY) == (self.player.arrayX, self.player.arrayY):
+                    print("tot")
     
             
         # Tunnel-Logik wurde entfernt
@@ -1018,7 +1063,11 @@ class Blinky:
             elif self.ghosts_animstate <= 0:
                 self.ghosts_anim_dir = 1
             self.ghosts_animstate += self.ghosts_anim_dir
+    
+        # Tunnel-Logik wurde entfernt
+        # Kein Wechsel von arrayX am linken/rechten Rand
 
+    
 
 
 class Inky:
