@@ -231,10 +231,20 @@ class MainMenu:
 class LevelEditor:
     def __init__(self,game):
         self.game = game
-        self.rows = 0
-        self.cols = 0
-        self.cell_width = 10
-        self.cell_height = 10
+        self.zeile = 20
+        self.spalte = 20
+        self.tile_size = self.game.width // (self.zeile + 2)
+        self.tile_types = 9
+        self.tile_images = [pygame.draw.circle(self.game.screen, 'white', ((self.spalte) + (self.spalte),(self.zeile) + (self.zeile)), 4), # Punkt 
+                            pygame.draw.line(self.game.screen, 'white', ((self.spalte),(self.zeile) + (0.5*self.zeile)), ((self.spalte) + self.spalte,(self.zeile) + (0.5*self.zeile)), 1), # Horizontale Wand (dünn)
+                            pygame.draw.line(self.game.screen, 'blue', ((self.spalte) + (0.5*self.spalte),(self.zeile)), ((self.spalte) + (0.5*self.spalte),(self.zeile) + self.zeile), 3),  # Vertikale Wand (dick)
+                            pygame.draw.line(self.game.screen, 'blue', ((self.spalte),(self.zeile) + (0.5*self.zeile)), ((self.spalte) + self.spalte,(self.zeile) + (0.5*self.zeile)), 3), # #Horizontale dicke Wand
+                            pygame.draw.arc(self.game.screen, 'blue', [(self.spalte - 0.4*self.spalte) - 3, (self.zeile + 0.5*self.zeile)-1, self.spalte, self.zeile], 0, pi/2, 3), #Kurve unten links
+                            pygame.draw.arc(self.game.screen, 'blue', [(self.spalte + 0.5*self.spalte), (self.zeile + 0.5*self.zeile), self.spalte, self.zeile], pi/2, pi, 3), #Kurve unten rechts
+                            pygame.draw.arc(self.game.screen, 'blue', [(self.spalte + 0.5*self.spalte), (self.zeile - 0.4*self.zeile) - 2, self.spalte, self.zeile], pi, 3*(pi/2), 3), #Kurve oben rechts
+                            pygame.draw.arc(self.game.screen, 'blue', [(self.spalte - 0.5*self.spalte) , (self.zeile - 0.5*self.zeile)+1, self.spalte, self.zeile], 3*(pi/2), 2*pi, 3), # Kurve oben links
+                            pygame.draw.circle(self.game.screen, 'white', ((self.spalte) + (0.5*self.spalte),(self.zeile) + (0.5*self.zeile)), 8) # Power
+                            ]
         self.board = []
         self.grid = None
 
@@ -252,14 +262,23 @@ class LevelEditor:
                 if event.key == pygame.K_RETURN:
                     self.game.switch_state("main_menu")
 
+    def draw_board(self):
+        # vertikale linien
+        for c in range(self.zeile + 1):
+            pygame.draw.line(self.game.screen, "white", (c * self.tile_size, 0), (c * self.tile_size, self.game.height))
+        # horizontale linien
+        for r in range(self.zeile + 1):
+            pygame.draw.line(self.game.screen, "white", (0, r * self.tile_size), (self.game.width, r * self.tile_size))
+
     def update(self):
         pass
 
     def draw(self):
         self.game.screen.fill((0, 0, 0))
-        if self.rows == 0 and self.cols == 0:
+        if self.zeile == 0 and self.spalte == 0:
             self.select_size()
         self.draw_board()
+        self.tile_images[1]
         pygame.display.flip()
 
 class Leaderboard:
