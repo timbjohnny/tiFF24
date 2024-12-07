@@ -310,7 +310,12 @@ class Gamestate:
                 self.game.screen.blit(text, text_rect)
                 pygame.display.flip()
                 pygame.time.delay(1000)  # Wait for 1 second between each message   
-                
+
+    def draw_score(self):
+        font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
+        text = font.render(f"Score: {self.score}", True, 'white')
+        self.game.screen.blit(text, (15, 735))
+      
     def victoryScreen(self):
         self.game.screen.fill('black')
         pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_victory.mp3')
@@ -324,7 +329,7 @@ class Gamestate:
         self.game.screen.blit(text_victory, text_victory_rect)
 
         # Anzeige des Scores
-        font_score = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 150)
+        font_score = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 100)
         text_score = font_score.render(f"Score: {self.score}", True, 'white')
         text_score_rect = text_score.get_rect(center=(self.game.width // 2, self.game.height // 2 + 100))  # Etwas nach unten verschoben
         self.game.screen.blit(text_score, text_score_rect)
@@ -355,11 +360,13 @@ class Gamestate:
                     pygame.draw.arc(game.screen, 'blue', [(j*self.spalte + 0.5*self.spalte), (i*self.zeile - 0.4*self.zeile) - 2, self.spalte, self.zeile], pi, 3*(pi/2), 3)
                 elif board.get_boardIJ(i,j) == 8: # Kurve oben links
                     pygame.draw.arc(game.screen, 'blue', [(j*self.spalte - 0.5*self.spalte) , (i*self.zeile - 0.5*self.zeile)+1, self.spalte, self.zeile], 3*(pi/2), 2*pi, 3)
+        # Sprites auf Spielfeld anzeigen
         self.player.draw(self.game.screen)
         self.blinky.draw(self.game.screen)
         self.inky.draw(self.game.screen)
         self.pinky.draw(self.game.screen)
         self.clyde.draw(self.game.screen)
+        self.draw_score()
         if board.checkVictory():
             self.victoryScreen()            
         pygame.display.flip()
@@ -393,6 +400,7 @@ class Player:
         self.zeile = gamestate.getZeile()
         self.pacman_images = gamestate.game.pacman_images
         self.game = gamestate.game
+        self.gamestate = gamestate
         self.x = x
         self.y = y
         self.arrayX = 11
@@ -475,22 +483,25 @@ class Player:
                 self.arrayX += 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
+                    self.gamestate.score += 10
             elif self.direction == 1 and board.get_boardIJ(self.arrayY, self.arrayX - 1) in (0, 1):  # Links
                 self.targetX -= self.spalte
                 self.arrayX -= 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
+                    self.gamestate.score += 10
             elif self.direction == 2 and board.get_boardIJ(self.arrayY - 1, self.arrayX) in (0, 1):  # Oben
                 self.targetY -= self.zeile
                 self.arrayY -= 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
-                    self.game.game.score += 10
+                    self.gamestate.score += 10
             elif self.direction == 3 and board.get_boardIJ(self.arrayY + 1, self.arrayX) in (0, 1):  # Unten
                 self.targetY += self.zeile
                 self.arrayY += 1
                 if board.get_boardIJ(self.arrayY, self.arrayX) == 1:
                     board.set_boardXY(self.arrayY, self.arrayX, 0)
+                    self.gamestate.score += 10
                 
                 
     def draw(self, screen):
