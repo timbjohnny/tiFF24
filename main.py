@@ -315,6 +315,23 @@ class Gamestate:
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
         text = font.render(f"Score: {self.score}", True, 'white')
         self.game.screen.blit(text, (15, 735))
+        
+    def draw_lives(self):
+        font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
+        text = font.render(f"Lives: ", True, 'white')
+        self.game.screen.blit(text, (400, 735))
+        if self.player.lives == 3:
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (1* 50), 735))
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (2* 50), 735))
+        elif self.player.lives == 2:
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (1* 50), 735))
+        elif self.player.lives == 1:
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
+            
+              
+         
       
     def victoryScreen(self):
         self.game.screen.fill('black')
@@ -343,12 +360,13 @@ class Gamestate:
     def draw(self):
         self.game.screen.fill((0, 0, 0))
         self.drawBoard()
-        self.drawLives()
+        self.draw_lives()
         self.player.draw(self.game.screen)
         self.blinky.draw(self.game.screen)
         self.inky.draw(self.game.screen)
         self.pinky.draw(self.game.screen)
         self.clyde.draw(self.game.screen)
+        self.draw_score()
         if board.checkVictory() == True:
             self.victoryScreen()            
         pygame.display.flip()
@@ -372,16 +390,7 @@ class Gamestate:
                     pygame.draw.arc(game.screen, 'blue', [(j*self.spalte + 0.5*self.spalte), (i*self.zeile - 0.4*self.zeile) - 2, self.spalte, self.zeile], pi, 3*(pi/2), 3)
                 elif board.get_boardIJ(i,j) == 8: # Kurve oben links
                     pygame.draw.arc(game.screen, 'blue', [(j*self.spalte - 0.5*self.spalte) , (i*self.zeile - 0.5*self.zeile)+1, self.spalte, self.zeile], 3*(pi/2), 2*pi, 3)
-        # Sprites auf Spielfeld anzeigen
-        self.player.draw(self.game.screen)
-        self.blinky.draw(self.game.screen)
-        self.inky.draw(self.game.screen)
-        self.pinky.draw(self.game.screen)
-        self.clyde.draw(self.game.screen)
-        self.draw_score()
-        if board.checkVictory():
-            self.victoryScreen()            
-        pygame.display.flip()
+        
 
 class PauseMenu:
     def __init__(self, game):
