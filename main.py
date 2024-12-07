@@ -423,6 +423,11 @@ class Player:
         # Change direction if no obstacle, as well as buffer the input to change direction when possible
         match self.buffer_direction:
             case 0: # Right
+                if self.arrayX == len(board.get_boardI(self.arrayY)) - 1:
+                    self.arrayX= 0
+                    self.x = -self.spalte
+                    self.targetX = 0
+                    print("aa" + str(self.arrayX))
                 if board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):
                     self.direction = 0
             case 1: # Left
@@ -456,11 +461,11 @@ class Player:
 
         # Bewegung nur ausführen, wenn Ziel erreicht ist
         if self.x == self.targetX and self.y == self.targetY and self.direction is not None:
-            if self.arrayX == len(board.get_boardI(self.arrayY)) - 1:
+            if self.arrayX == len(board.get_boardI(self.arrayY)) - 1 and self.direction == 0:
                 self.arrayX= 0
                 self.x = -self.spalte
                 self.targetX = 0
-            elif self.arrayX == 0:
+            elif self.arrayX == 0 and self.direction == 1:
                 self.arrayX = len(board.get_boardI(self.arrayY)) - 1
                 self.x = self.spalte * len(board.get_boardI(self.arrayY))
                 self.targetX = (self.spalte - 1) * len(board.get_boardI(self.arrayY))
