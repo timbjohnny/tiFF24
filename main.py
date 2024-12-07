@@ -312,6 +312,7 @@ class Gamestate:
                 pygame.time.delay(1000)  # Wait for 1 second between each message   
 
     def draw_score(self):
+        # Show the score in bottom left corner
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
         text = font.render(f"Score: {self.score}", True, 'white')
         self.game.screen.blit(text, (15, 735))
@@ -333,11 +334,36 @@ class Gamestate:
         text_score = font_score.render(f"Score: {self.score}", True, 'white')
         text_score_rect = text_score.get_rect(center=(self.game.width // 2, self.game.height // 2 + 100))  # Etwas nach unten verschoben
         self.game.screen.blit(text_score, text_score_rect)
-
-        # Bildschirm aktualisieren
         pygame.display.flip()
-        pygame.time.delay(6000)  # 3 Sekunden warten
-        self.game.switch_state("main_menu") 
+
+        pygame.time.delay(3000) # 3 Sekunden warten
+        leaderboard_path = f"{self.game.dir_path}/assets/leaderboard.json"
+        # Load existing leaderboard data or initialize an empty dictionary if the file doesn't exist
+        if os.path.exists(leaderboard_path):
+            with open(leaderboard_path, "r") as f:
+                try:
+                    data = json.load(f)
+                except json.JSONDecodeError:
+                    data = {}
+        else:
+            data = {}
+
+        # Create a new object with the desired elements
+        new_entry = {
+            "name": "Player",
+            "score": self.score
+        }
+
+        # Add the new key with the new object to the existing data
+        data["p14"] = [new_entry]
+
+        # Write the updated data back to the JSON file
+        with open(leaderboard_path, "w") as f:
+            json.dump(data, f, indent=4)
+        
+        self.game.switch_state("main_menu")
+
+            
                 
 
     def draw(self):
