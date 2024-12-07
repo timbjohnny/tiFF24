@@ -567,14 +567,15 @@ class Blinky:
         self.lastmove = []
 
     def update(self):
+        print(f"Blinky position: ({self.x}, {self.y}), Player position: ({self.player.x}, {self.player.y})")
         if self.x < self.targetX:
-                self.x += self.speed
+            self.x += self.speed
         elif self.x > self.targetX:
-                self.x -= self.speed
+            self.x -= self.speed
         if self.y < self.targetY:
-                self.y += self.speed
+            self.y += self.speed
         elif self.y > self.targetY:
-                self.y -= self.speed
+            self.y -= self.speed
                 
         if self.x == self.targetX and self.y == self.targetY and self.direction is not None:
             if board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):  # Rechts
@@ -596,6 +597,7 @@ class Blinky:
                 self.ghosts_anim_dir = 1
 
             self.ghosts_animstate += 1 * self.ghosts_anim_dir
+
     def __init__(self, x, y, gamestate):
         self.spalte = gamestate.getSpalte()
         self.zeile = gamestate.getZeile()
