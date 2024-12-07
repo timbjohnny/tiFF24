@@ -891,8 +891,11 @@ class Blinky:
         if abs(self.y - self.targetY) < self.speed:
             self.y = self.targetY
     
-        #while self.power_up == True:
-           # if self.player
+        if self.gamestate.player.power_up == True:
+            if (self.x,self.y) == (self.player.x, self.player.y):
+                print("tot")
+
+    
             
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
