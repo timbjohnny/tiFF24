@@ -270,7 +270,7 @@ class Gamestate:
         self.zeile = int(game.height / 30)
         self.score = 0
         self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
-        self.blinky = Blinky(345, 283, self)
+        self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
         self.inky = Inky(300, 337, self)
         self.pinky = Pinky(345, 337, self)
         self.clyde = Clyde(390, 337, self)
@@ -294,6 +294,7 @@ class Gamestate:
 
     def update(self):
         self.player.update()
+        self.blinky.update()
         
     def countdown(self):
         if self.game.prev_state == self.game.states["main_menu"]:
@@ -316,6 +317,23 @@ class Gamestate:
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
         text = font.render(f"Score: {self.score}", True, 'white')
         self.game.screen.blit(text, (15, 735))
+        
+    def draw_lives(self):
+        font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
+        text = font.render(f"Lives: ", True, 'white')
+        self.game.screen.blit(text, (400, 735))
+        if self.player.lives == 3:
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (1* 50), 735))
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (2* 50), 735))
+        elif self.player.lives == 2:
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (1* 50), 735))
+        elif self.player.lives == 1:
+            self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
+            
+              
+         
       
     def victoryScreen(self):
         self.game.screen.fill('black')
@@ -368,11 +386,24 @@ class Gamestate:
 
     def draw(self):
         self.game.screen.fill((0, 0, 0))
+        self.drawBoard()
+        self.draw_lives()
+        self.player.draw(self.game.screen)
+        self.blinky.draw(self.game.screen)
+        self.inky.draw(self.game.screen)
+        self.pinky.draw(self.game.screen)
+        self.clyde.draw(self.game.screen)
+        self.draw_score()
+        if board.checkVictory() == True:
+            self.victoryScreen()            
+        pygame.display.flip()
+    
+    def drawBoard(self):    
         for i in range(len(board.get_board())):
             for j in range(len(board.get_boardI(i))):
                 if board.get_boardIJ(i,j) == 1: #Auf dem Feld ist ein Punkt zum Essen
                     pygame.draw.circle(game.screen, 'white', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + (0.5*self.zeile)), 4)
-                elif board.get_boardIJ(i,j) == 2: # Horizonatale Wand
+                elif board.get_boardIJ(i,j) == 2: # Horizontale Wand
                     pygame.draw.line(game.screen, 'white', ((j*self.spalte),(i*self.zeile) + (0.5*self.zeile)), ((j*self.spalte) + self.spalte,(i*self.zeile) + (0.5*self.zeile)), 1)
                 elif board.get_boardIJ(i,j) == 3: #Vertikale Wand
                     pygame.draw.line(game.screen, 'blue', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile)), ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + self.zeile), 3)
@@ -386,16 +417,7 @@ class Gamestate:
                     pygame.draw.arc(game.screen, 'blue', [(j*self.spalte + 0.5*self.spalte), (i*self.zeile - 0.4*self.zeile) - 2, self.spalte, self.zeile], pi, 3*(pi/2), 3)
                 elif board.get_boardIJ(i,j) == 8: # Kurve oben links
                     pygame.draw.arc(game.screen, 'blue', [(j*self.spalte - 0.5*self.spalte) , (i*self.zeile - 0.5*self.zeile)+1, self.spalte, self.zeile], 3*(pi/2), 2*pi, 3)
-        # Sprites auf Spielfeld anzeigen
-        self.player.draw(self.game.screen)
-        self.blinky.draw(self.game.screen)
-        self.inky.draw(self.game.screen)
-        self.pinky.draw(self.game.screen)
-        self.clyde.draw(self.game.screen)
-        self.draw_score()
-        if board.checkVictory():
-            self.victoryScreen()            
-        pygame.display.flip()
+        
 
 class PauseMenu:
     def __init__(self, game):
@@ -438,6 +460,7 @@ class Player:
         self.imageSkip = 0
         self.direction = 0
         self.buffer_direction = 0
+        self.lives = 3
         self.move_event = pygame.USEREVENT + 1  # Benutzerdefiniertes Ereignis für die Bewegung
         pygame.time.set_timer(self.move_event, 180)  # Timer setzen: jede Sekunde ein Ereignis
         
@@ -462,7 +485,6 @@ class Player:
                     self.arrayX= 0
                     self.x = -self.spalte
                     self.targetX = 0
-                    print("aa" + str(self.arrayX))
                 if board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):
                     self.direction = 0
             case 1: # Left
@@ -552,16 +574,114 @@ class Blinky:
         self.game = gamestate.game
         self.x = x
         self.y = y
+        self.arrayX = 11
+        self.arrayY = 11
+        self.imageSkip = 0
         self.ghosts_animstate = 0
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
+        self.way = {}
+
+        self.targetX = x
+        self.targetY = y
+        self.speed = 2
+        self.direction = 0
+        self.visited = []
+        self.queue = []
+        self.player = gamestate.getPlayer()
+        self.moveable = []
+        self.lastmove = []
+
+    def update(self):
+        print(f"Blinky position: ({self.x}, {self.y}), Player position: ({self.player.x}, {self.player.y})")
+        if self.x < self.targetX:
+            self.x += self.speed
+        elif self.x > self.targetX:
+            self.x -= self.speed
+        if self.y < self.targetY:
+            self.y += self.speed
+        elif self.y > self.targetY:
+            self.y -= self.speed
+                
+        if self.x == self.targetX and self.y == self.targetY and self.direction is not None:
+            if board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):  # Rechts
+                self.targetX += self.spalte
+                self.arrayX += 1
 
     def handle_events(self, event):
         pass
 
+    def draw(self, screen):
+        screen.blit(self.game.blinkyR_images[int(self.ghosts_animstate)], (self.x, self.y))
+
+        current_time = pygame.time.get_ticks()  # current time in ms since game started
+        if current_time - self.last_update_time >= 200:
+            self.last_update_time = current_time
+            if self.ghosts_animstate >= len(self.game.blinkyR_images) - 1:
+                self.ghosts_anim_dir = -1
+            elif self.ghosts_animstate <= 0:
+                self.ghosts_anim_dir = 1
+
+            self.ghosts_animstate += 1 * self.ghosts_anim_dir
+
+    def __init__(self, x, y, gamestate):
+        self.spalte = gamestate.getSpalte()
+        self.zeile = gamestate.getZeile()
+        self.blinky_images = gamestate.game.blinkyR_images
+        self.game = gamestate.game
+        self.x = x
+        self.y = y
+        self.arrayX = 11
+        self.arrayY = 11
+        self.imageSkip = 0
+        self.ghosts_animstate = 0
+        self.ghosts_anim_dir = 1
+        self.last_update_time = 0
+        self.way = {}
+
+        self.targetX = x
+        self.targetY = y
+        self.speed = 2
+        self.direction = 0
+        self.visited = []
+        self.queue = []
+        self.player = gamestate.getPlayer()
+        self.moveable = []
+        self.lastmove = []
+
     def update(self):
+        if self.x < self.targetX:
+                self.x += self.speed
+        elif self.x > self.targetX:
+                self.x -= self.speed
+        if self.y < self.targetY:
+                self.y += self.speed
+        elif self.y > self.targetY:
+                self.y -= self.speed
+                
+        if self.x == self.targetX and self.y == self.targetY and self.direction is not None:
+            if board.get_boardIJ(self.arrayY, self.arrayX + 1) in (0, 1):  # Rechts
+                self.targetX += self.spalte
+                self.arrayX += 1
+
+    def handle_events(self, event):
         pass
 
+    def draw(self, screen):
+        screen.blit(self.game.blinkyR_images[int(self.ghosts_animstate)], (self.x, self.y))
+
+        current_time = pygame.time.get_ticks()  # current time in ms since game started
+        if current_time - self.last_update_time >= 200:
+            self.last_update_time = current_time
+            if self.ghosts_animstate >= len(self.game.blinkyR_images) - 1:
+                self.ghosts_anim_dir = -1
+            elif self.ghosts_animstate <= 0:
+                self.ghosts_anim_dir = 1
+
+            self.ghosts_animstate += 1 * self.ghosts_anim_dir
+ 
+
+   
     def draw(self, screen):
         screen.blit(self.game.blinkyR_images[int(self.ghosts_animstate)], (self.x, self.y))
 
