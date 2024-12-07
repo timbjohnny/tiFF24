@@ -95,7 +95,7 @@ class Board:
                 self.play_chomp_sound()
                 self.boards1[i][j] = newValue
         elif lvl == 2:
-            if self.boards2[i][j] == 9 and newValue == 0:
+            if self.boards2[i][j] == 1 and newValue == 0:
                 self.play_chomp_sound()
                 self.boards2[i][j] = newValue
             elif self.boards1[i][j] == 9 and newValue == 0:

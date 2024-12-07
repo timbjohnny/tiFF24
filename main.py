@@ -295,7 +295,7 @@ class Leaderboard:
 class Gamestate:
     def __init__(self, game):
         self.game = game
-        self.level = 2
+        self.level = 1
         if self.level == 1:
             self.spalte = int(game.width / 24)
             self.zeile = int(game.height / 30)
@@ -702,7 +702,7 @@ class Blinky:
                 # Prüfe, ob next_x in [0, cols-1] und next_y\ in [0, rows-1] liegen
                 if 0 <= next_x < cols and 0 <= next_y < rows:
                     cell = board.get_boardIJ(self.level, next_y, next_x)
-                    if cell in (0,1,2) and (next_y, next_x) not in visited:
+                    if cell in (0,1,2,9) and (next_y, next_x) not in visited:
                         visited.add((next_y, next_x))
                         parent[(next_x, next_y)] = (curren_x, curren_y)
                         queue.append((next_x, next_y))
