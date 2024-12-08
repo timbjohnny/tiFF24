@@ -443,6 +443,8 @@ class Leaderboard:
                             sorted(data.items(), key=lambda item: item[1][0]['score'], reverse=True)}
                 # Die Sortierten keys durchgehen und die Namen und Scores rendern
                     for i, (key, value) in enumerate(sorted_data.items()):
+                        if i >= 13:
+                            break
                         player_name = value[0]["name"]
                         player_score = value[0]["score"]
                         # Render player name centered relative to header
@@ -582,7 +584,6 @@ class Gamestate:
     def resetGamestate(self):
         board.resetBoard()
         self.game = game
-        self.level = 2
         if self.level == 1:
             self.spalte = int(game.width / 24)
             self.zeile = int(game.height / 30)
@@ -602,6 +603,12 @@ class Gamestate:
             self.inky = Inky(300, 337, self)
             self.pinky = Pinky(345, 337, self)
             self.clyde = Clyde(390, 337, self)
+        elif self.level == 3:
+            self.player = Player(13* self.spalte, 23*self.zeile, self) # x,y Startposition
+            self.blinky = Blinky(13*self.spalte, 11*self.zeile, self)
+            self.inky = Inky(11*self.spalte, 13*self.zeile, self)
+            self.pinky = Pinky(13*self.spalte, 13*self.zeile, self)
+            self.clyde = Clyde(15*self.spalte, 13*self.zeile, self)
         self.ghosts = [self.blinky]#, self.inky, self.pinky, self.clyde] 
         self.invulnerable = False
         self.invulnerable_start_time = None  
@@ -629,13 +636,14 @@ class Gamestate:
     def update(self):
         self.player.update()
         self.blinky.update()
-        elapsed_time = pygame.time.get_ticks() - self.game_start_time
-        if elapsed_time > 3000: # Inky nach 3 Sekunden freilassen
-            self.inky.update()
-        if elapsed_time >5000: # Pinky nach 5 Sekunden freilassen
-            self.pinky.update()
-        if elapsed_time > 7000: # Clyde nach 7 Sekunden freilassen
-                self.clyde.update()
+        if self.game_start_time is not None:
+            elapsed_time = pygame.time.get_ticks() - self.game_start_time
+            if elapsed_time > 3000: # Inky nach 3 Sekunden freilassen
+                self.inky.update()
+            if elapsed_time >5000: # Pinky nach 5 Sekunden freilassen
+                self.pinky.update()
+            if elapsed_time > 7000: # Clyde nach 7 Sekunden freilassen
+                    self.clyde.update()
         
         
     def countdown(self):
@@ -718,7 +726,7 @@ class Gamestate:
         pygame.display.flip()
         pygame.time.delay(6000)  # 3 Sekunden warten
         self.resetGamestate() 
-        self.game.switch_state("name") 
+        self.game.switch_state("main_menu")
         
     def checkCollision(self):
         if self.invulnerable:
