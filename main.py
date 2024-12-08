@@ -589,7 +589,10 @@ class Gamestate:
             self.zeile = int(game.height / 30)
         elif self.level == 2:
             self.spalte = int(game.width / 16)
-            self.zeile = int(game.height / 22)    
+            self.zeile = int(game.height / 22)  
+        elif self.level == 3:
+            self.spalte = int(game.width / 28)
+            self.zeile = int(game.height / 35)
         # Score reset verschoben in EnterName
         if self.level == 1:
             self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
@@ -609,7 +612,7 @@ class Gamestate:
             self.inky = Inky(11*self.spalte, 13*self.zeile, self)
             self.pinky = Pinky(13*self.spalte, 13*self.zeile, self)
             self.clyde = Clyde(15*self.spalte, 13*self.zeile, self)
-        self.ghosts = [self.blinky]#, self.inky, self.pinky, self.clyde] 
+        self.ghosts = [self.blinky, self.inky, self.pinky, self.clyde] 
         self.invulnerable = False
         self.invulnerable_start_time = None  
         self.game_start_time = None 
@@ -940,7 +943,7 @@ class Player:
         self.targetX = x
         self.targetY = y
         self.size = 50
-        self.speed = 5
+        self.speed = 3
         self.imageSkip = 0
         self.direction = 0
         self.buffer_direction = 0
