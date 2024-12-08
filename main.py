@@ -23,6 +23,7 @@ class Game:
         self.score = 0
         self.dir_path = os.path.dirname(__file__)
         self.level = 1
+        self.multiplier = 1
 
         self.pacman_images = []
         for i in range(0, 4): 
@@ -1038,6 +1039,7 @@ class Player:
             if elapsed_time >= self.timer_duration:
                 print("Power-Up abgelaufen!")
                 self.power_up = False
+                self.game.multiplier = 1
 
 
        
@@ -1170,7 +1172,9 @@ class Blinky:
         elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
-                print("+200 Punkte")
+                print(f"{200 * self.game.multiplier} Punkte")
+                self.game.score += 200 * self.game.multiplier
+                self.game.multiplier += 1
             if self.x == self.targetX and self.y == self.targetY:
             
                 start_x, start_y = self.arrayX, self.arrayY
@@ -1400,7 +1404,9 @@ class Inky:
         elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
-                print("+200 Punkte")
+                print(f"{200 * self.game.multiplier} Punkte")
+                self.game.score += 200 * self.game.multiplier
+                self.game.multiplier += 1
             if self.x == self.targetX and self.y == self.targetY:
             
                 start_x, start_y = self.arrayX, self.arrayY
@@ -1628,7 +1634,9 @@ class Clyde:
         elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
-                print("+200 Punkte")
+                print(f"{200 * self.game.multiplier} Punkte")
+                self.game.score += 200 * self.game.multiplier
+                self.game.multiplier += 1
             if self.x == self.targetX and self.y == self.targetY:
             
                 start_x, start_y = self.arrayX, self.arrayY
@@ -1855,7 +1863,9 @@ class Pinky:
         elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
-                print("+200 Punkte")
+                print(f"{200 * self.game.multiplier} Punkte")
+                self.game.score += 200 * self.game.multiplier
+                self.game.multiplier += 1
             if self.x == self.targetX and self.y == self.targetY:
             
                 start_x, start_y = self.arrayX, self.arrayY
