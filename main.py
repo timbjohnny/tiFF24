@@ -232,9 +232,9 @@ class MainMenu:
 class LevelEditor:
     def __init__(self, game):
         self.game = game
-        self.rows = 20
-        self.cols = 20
-        self.cell_size = min(self.game.width // self.cols, self.game.height // self.rows)
+        self.rows = 32
+        self.cols = 28
+        self.cell_size = min(self.game.width // self.cols, (self.game.height * 0.90)// self.rows)
         self.grid = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
         self.selected_tile = 0
         
@@ -259,8 +259,8 @@ class LevelEditor:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 # Get mouse position and convert to grid coordinates
                 mouse_pos = pygame.mouse.get_pos()
-                grid_x = mouse_pos[0] // self.cell_size
-                grid_y = mouse_pos[1] // self.cell_size
+                grid_x = int(mouse_pos[0] // self.cell_size)
+                grid_y = int(mouse_pos[1] // self.cell_size)
                 
                 # Place selected tile if within grid bounds
                 if 0 <= grid_x < self.cols and 0 <= grid_y < self.rows:
@@ -290,69 +290,77 @@ class LevelEditor:
             for col in range(self.cols):
                 tile_type = self.grid[row][col]
                 if tile_type != 0:
-                    x = col * self.cell_size + self.cell_size // 2 # Koordinaten, wo tiles platziert werden
+                    x = col * self.cell_size + self.cell_size // 2 # Koordinaten, wo tiles platziert werden (zentriert)
                     y = row * self.cell_size + self.cell_size // 2
                     
-                    if tile_type == 1:  # Dot
+                    if tile_type == 1:  # Punkt
                         pygame.draw.circle(self.game.screen, 'white', (x, y), 4)
-                    elif tile_type == 2:  # Horizontal wall
-                        pygame.draw.line(self.game.screen, 'blue', 
+                    elif tile_type == 2:  # Horizontale wand (dünn)
+                        pygame.draw.line(self.game.screen, 'white', 
                                        (x - self.cell_size//2, y),
-                                       (x + self.cell_size//2, y), 3)
-                    elif tile_type == 3:  # Vertical wall
+                                       (x + self.cell_size//2, y), 1)
+                    elif tile_type == 3:  # Vertikale wand (dick)
                         pygame.draw.line(self.game.screen, 'blue',
                                        (x, y - self.cell_size//2),
-                                       (x, y + self.cell_size//2), 3)
-                    elif tile_type == 4:  # Thick wall
+                                       (x, y + self.cell_size//2), 4)
+                    elif tile_type == 4:  # horizontale dicke wand
                         pygame.draw.line(self.game.screen, 'blue', 
-                                         (x,y - self.cell_size//2), 
-                                         (x , y + self.cell_size//2), 3)
-                    elif tile_type == 5:  # Bottom left curve
-                        pygame.draw.arc(self.game.screen, 'blue', [200, 250, , 0.5*x], 0, pi/2, 3)
-                    elif tile_type == 9:  # Power pellet
+                                         (x - self.cell_size//2,y), 
+                                         (x + self.cell_size//2,y), 4)
+                    elif tile_type == 5:  # Kurve unten links
+                        pygame.draw.arc(self.game.screen, 'blue', [x - self.cell_size, y, self.cell_size, self.cell_size],
+                                                                    0, pi/2, 3)
+                    elif tile_type == 6:  # Kurve unten rechts
+                        pygame.draw.arc(self.game.screen, 'blue', [x, y, self.cell_size, self.cell_size],
+                                                                    pi/2, pi, 3) 
+                    elif tile_type == 7:  # Kurve oben rechts
+                        pygame.draw.arc(self.game.screen, 'blue', [x, y - self.cell_size, self.cell_size, self.cell_size],
+                                                                    pi, 3*pi/2, 3)
+                    elif tile_type == 8:  # Kurve oben links
+                        pygame.draw.arc(self.game.screen, 'blue', [x - self.cell_size, y - self.cell_size, self.cell_size, self.cell_size],
+                                                                    3*pi/2, 2*pi, 3) 
+                    elif tile_type == 9:  # Power 
                         pygame.draw.circle(self.game.screen, 'white', (x, y), 8)
-
-
-                #if val == 1: # Punkt
-               #     pygame.draw.circle(self.game.screen, 'white', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + (0.5*self.zeile)), 4)
-                #elif val == 2: # Horizontale Wand (dünn)
-                #    pygame.draw.line(self.game.screen, 'white', ((j*self.spalte),(i*self.zeile) + (0.5*self.zeile)), ((j*self.spalte) + self.spalte,(i*self.zeile) + (0.5*self.zeile)), 1)
-                #elif val == 3: #Vertikale Wand (dick)
-                #    pygame.draw.line(self.game.screen, 'blue', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile)), ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + self.zeile), 3)
-                #elif val == 4: #Horizontale dicke Wand
-                #    pygame.draw.line(self.game.screen, 'blue', ((j*self.spalte),(i*self.zeile) + (0.5*self.zeile)), ((j*self.spalte) + self.spalte,(i*self.zeile) + (0.5*self.zeile)), 3)
-                #elif val == 5: #Kurve unten links
-                #    pygame.draw.arc(self.game.screen, 'blue', [(j*self.spalte - 0.4*self.spalte) - 3, (i*self.zeile + 0.5*self.zeile)-1, self.spalte, self.zeile], 0, pi/2, 3)
-                #elif val == 6: #Kurve unten rechts
-                #    pygame.draw.arc(self.game.screen, 'blue', [(j*self.spalte + 0.5*self.spalte), (i*self.zeile + 0.5*self.zeile), self.spalte, self.zeile], pi/2, pi, 3)
-                #elif val == 7: #Kurve oben rechts
-                #    pygame.draw.arc(self.game.screen, 'blue', [(j*self.spalte + 0.5*self.spalte), (i*self.zeile - 0.4*self.zeile) - 2, self.spalte, self.zeile], pi, 3*(pi/2), 3)
-                #elif val == 8: # Kurve oben links
-                #    pygame.draw.arc(self.game.screen, 'blue', [(j*self.spalte - 0.5*self.spalte) , (i*self.zeile - 0.5*self.zeile)+1, self.spalte, self.zeile], 3*(pi/2), 2*pi, 3)
-                #elif val == 9: # Power
-                 #    pygame.draw.circle(self.game.screen, 'white', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + (0.5*self.zeile)), 8)
 
 
     def draw_ui(self):
         # Draw currently selected tile
         font = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 36)
-        text = font.render(f"Selected: {self.tiles[self.selected_tile]}", True, (255, 255, 255))
+        text = font.render(f"Selected:", True, (255, 255, 255))
+        # Das korrekte tile anzeigen
+        for i in enumerate(self.tiles):
+            match self.selected_tile:
+                case 0: pass
+                case i: self.game.screen.blit(pygame.image.load(f"{self.game.dir_path}/assets/tiles/tile_"+str(i)+".png"), ((180, self.game.height - 80)))
+
         self.game.screen.blit(text, (10, self.game.height - 40))
 
     def save_level(self):
-        with open(f"{self.game.dir_path}/assets/custom_level.txt", "w") as f:
-            for row in self.grid:
-                f.write("".join(map(str, row)) + "\n")
+        new_level = {
+            "level_data": self.grid,
+            "rows": self.rows,
+            "cols": self.cols
+        }
+        with open(f"{self.game.dir_path}/assets/custom_level.json", "w") as f:
+            # Create the JSON string with minimal formatting
+            json_str = json.dumps(new_level, separators=(',', ':'))
+            
+            # Add line breaks after each row
+            formatted_str = json_str.replace("],", "],\n")
+            
+            # Write the formatted string to file
+            f.write(formatted_str)
 
     def load_level(self):
         try:
-            with open(f"{self.game.dir_path}/assets/custom_level.txt", "r") as f:
-                lines = f.readlines()
-                for i, line in enumerate(lines):
-                    for j, char in enumerate(line.strip()):
-                        self.grid[i][j] = int(char)
+            with open(f"{self.game.dir_path}/assets/custom_level.json", "r") as f:
+                data = json.load(f)
+                # Extract only the level_data field
+                self.grid = data["level_data"]
         except FileNotFoundError:
-            pass
+            print("Level file not found")
+        except KeyError:
+            print("Level data not found in file")
 
     def draw(self):
         self.game.screen.fill((0, 0, 0))
@@ -523,13 +531,16 @@ class LevelSelect:
 class Gamestate:
     def __init__(self, game, level):
         self.game = game
-        self.level = level
+        self.level = 3
         if self.level == 1:
             self.spalte = int(game.width / 24)
             self.zeile = int(game.height / 30)
         elif self.level == 2:
             self.spalte = int(game.width / 16)
-            self.zeile = int(game.height / 22)    
+            self.zeile = int(game.height / 22)
+        elif self.level == 3:
+            self.spalte = int(game.width / 28)
+            self.zeile = int(game.height / 32)
         if self.level == 1:
             self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
             self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
@@ -542,6 +553,12 @@ class Gamestate:
             self.inky = Inky(300, 337, self)
             self.pinky = Pinky(345, 337, self)
             self.clyde = Clyde(390, 337, self)
+        elif self.level == 3:
+            self.player = Player(13* self.spalte, 23*self.zeile, self) # x,y Startposition
+            self.blinky = Blinky(13*self.spalte, 11*self.zeile, self)
+            self.inky = Inky(11*self.spalte, 13*self.zeile, self)
+            self.pinky = Pinky(13*self.spalte, 13*self.zeile, self)
+            self.clyde = Clyde(15*self.spalte, 13*self.zeile, self)
         self.ghosts = [self.blinky, self.inky, self.pinky, self.clyde] 
         self.invulnerable = False
         self.invulnerable_start_time = None
@@ -893,6 +910,9 @@ class Player:
         elif self.level == 2:
             self.arrayX = 7
             self.arrayY = 17
+        elif self.level == 3:
+            self.arrayX = 13
+            self.arrayY = 23
             
         self.targetX = x
         self.targetY = y
@@ -1049,7 +1069,10 @@ class Blinky:
             self.arrayY = 11
         elif self.level == 2:
             self.arrayX = 7
-            self.arrayY = 7                
+            self.arrayY = 7   
+        elif self.level == 3:
+            self.arrayX = 11
+            self.arrayY = 11             
         self.targetX = x
         self.targetY = y
         self.speed = 2
@@ -1147,7 +1170,7 @@ class Blinky:
         elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
-                print("got eaten")
+                print("+200 Punkte")
             if self.x == self.targetX and self.y == self.targetY:
             
                 start_x, start_y = self.arrayX, self.arrayY
@@ -1276,7 +1299,10 @@ class Inky:
             self.arrayY = 11
         elif self.level == 2:
             self.arrayX = 7
-            self.arrayY = 7                
+            self.arrayY = 7 
+        elif self.level == 3:
+            self.arrayX = 11
+            self.arrayY = 11               
         self.targetX = x
         self.targetY = y
         self.speed = 2
@@ -1374,7 +1400,7 @@ class Inky:
         elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
-                print("got eaten")
+                print("+200 Punkte")
             if self.x == self.targetX and self.y == self.targetY:
             
                 start_x, start_y = self.arrayX, self.arrayY
@@ -1501,7 +1527,10 @@ class Clyde:
             self.arrayY = 11
         elif self.level == 2:
             self.arrayX = 7
-            self.arrayY = 7                
+            self.arrayY = 7  
+        elif self.level == 3:
+            self.arrayX = 11
+            self.arrayY = 13             
         self.targetX = x
         self.targetY = y
         self.speed = 2
@@ -1599,7 +1628,7 @@ class Clyde:
         elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
-                print("got eaten")
+                print("+200 Punkte")
             if self.x == self.targetX and self.y == self.targetY:
             
                 start_x, start_y = self.arrayX, self.arrayY
@@ -1725,7 +1754,10 @@ class Pinky:
             self.arrayY = 11
         elif self.level == 2:
             self.arrayX = 7
-            self.arrayY = 7                
+            self.arrayY = 7   
+        elif self.level == 3:
+            self.arrayX = 11
+            self.arrayY = 15            
         self.targetX = x
         self.targetY = y
         self.speed = 2
@@ -1823,7 +1855,7 @@ class Pinky:
         elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
-                print("got eaten")
+                print("+200 Punkte")
             if self.x == self.targetX and self.y == self.targetY:
             
                 start_x, start_y = self.arrayX, self.arrayY
