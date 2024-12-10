@@ -104,6 +104,21 @@ class Game:
         for i in range(0, 2):
             img = pygame.image.load(f'{self.dir_path}/assets/vulnerable/wG_{i}.png')
             self.blinking_images.append(pygame.transform.scale(img, (30,30)))
+        #eyes looking down   
+        self.eyesD = []
+        for i in range(0, 2):
+            img = pygame.image.load(f'{self.dir_path}/assets/eyes/eyesD.png')
+            self.eyesD.append(pygame.transform.scale(img, (30,30)))
+        #eyes looking right   
+        self.eyesR = []
+        for i in range(0, 2):
+            img = pygame.image.load(f'{self.dir_path}/assets/eyes/eyesR.png')
+            self.eyesR.append(pygame.transform.scale(img, (30,30)))
+        #eyes looking left   
+        self.eyesU = []
+        for i in range(0, 2):
+            img = pygame.image.load(f'{self.dir_path}/assets/eyes/eyesU.png')
+            self.eyesU.append(pygame.transform.scale(img, (30,30)))
 
         # Game states
         self.states = {
@@ -562,20 +577,20 @@ class Gamestate:
             self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
             self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
             self.inky = Inky(10*self.spalte, 13*self.zeile, self)
-            self.pinky = Pinky(12*self.spalte, 13*self.zeile, self)
-            self.clyde = Clyde(13*self.spalte, 13*self.zeile, self)
+            self.pinky = Pinky(11*self.spalte, 13*self.zeile, self)
+            self.clyde = Clyde(12*self.spalte, 13*self.zeile, self)
         elif self.level == 2:
             self.player = Player(7* self.spalte, 17*self.zeile, self) # x,y Startposition
             self.blinky = Blinky(7*self.spalte, 7*self.zeile, self)
-            self.inky = Inky(300, 337, self)
-            self.pinky = Pinky(345, 337, self)
-            self.clyde = Clyde(390, 337, self)
+            self.inky = Inky(6*self.spalte, 9*self.zeile, self)
+            self.pinky = Pinky(7*self.spalte, 9*self.zeile, self)
+            self.clyde = Clyde(8*self.spalte, 9*self.zeile, self)
         elif self.level == 3:
             self.player = Player(13* self.spalte, 23*self.zeile, self) # x,y Startposition
             self.blinky = Blinky(13*self.spalte, 11*self.zeile, self)
-            self.inky = Inky(11*self.spalte, 13*self.zeile, self)
-            self.pinky = Pinky(13*self.spalte, 13*self.zeile, self)
-            self.clyde = Clyde(15*self.spalte, 13*self.zeile, self)
+            self.inky = Inky(11*self.spalte, 14*self.zeile, self)
+            self.pinky = Pinky(12*self.spalte, 14*self.zeile, self)
+            self.clyde = Clyde(13*self.spalte, 14*self.zeile, self)
         self.ghosts = [self.blinky, self.inky, self.pinky, self.clyde] 
         self.invulnerable = False
         self.invulnerable_start_time = None
@@ -739,7 +754,7 @@ class Gamestate:
         if self.invulnerable == False:
             for ghost in self.ghosts:
                 if self.player.arrayX == ghost.arrayX and self.player.arrayY == ghost.arrayY:
-                    if self.player.power_up == False:
+                    if self.player.power_up == False: #or ghost.ignorePowerUp == True:
                         self.player.lives -= 1  
                         self.invulnerable = True
                         self.invulnerable_start_time = pygame.time.get_ticks()
@@ -1324,14 +1339,16 @@ class Inky:
         self.x = x
         self.y = y
         if self.level == 1:
-            self.arrayX = 11
-            self.arrayY = 11
+            self.arrayX = 10
+            self.arrayY = 13
         elif self.level == 2:
-            self.arrayX = 7
-            self.arrayY = 7 
+            self.arrayX = 6
+            self.arrayY = 9 
         elif self.level == 3:
             self.arrayX = 11
-            self.arrayY = 11               
+            self.arrayY = 14      
+        self.startX = self.arrayX
+        self.startY = self.arrayY
         self.targetX = x
         self.targetY = y
         self.speed = 2
@@ -1344,6 +1361,8 @@ class Inky:
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
         self.eaten = False
+        self.ignorePowerUp = False
+        
 
     def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
         rows = len(board.get_board(self.level))
@@ -1396,7 +1415,7 @@ class Inky:
         if self.eaten:  # Geist wurde gegessen, bewegt sich zur Box
             if self.x == self.targetX and self.y == self.targetY:
                 start_x, start_y = self.arrayX, self.arrayY
-                goal_x, goal_y = 11,13  # Zielposition der Box
+                goal_x, goal_y = self.startX, self.startY  # Zielposition der Box
                 move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
 
                 if move is not None:
@@ -1422,11 +1441,11 @@ class Inky:
                 self.y = self.targetY
 
         # Geist hat die Box erreicht
-            if (self.arrayX, self.arrayY) == (11, 13):
+            if (self.arrayX, self.arrayY) == (self.startX, self.startY):
                 self.eaten = False  # Zurück zum normalen Verhalten
-                print("bin da")
+                self.ignorePowerUp = True
 
-        elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
+        elif self.gamestate.player.power_up and self.ignorePowerUp == False:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
                 print(f"{200 * self.game.multiplier} Punkte")
@@ -1441,6 +1460,7 @@ class Inky:
 
                 if move is not None:
                     dx, dy = move
+                    self.inky_images = self.game.vulnerable_images 
                     self.arrayX += dx
                     self.arrayY += dy
                     self.targetX = self.arrayX * self.spalte
@@ -1462,6 +1482,10 @@ class Inky:
                 self.y = self.targetY
 
         else:  # Normales Verhalten
+            if self.player.power_up == True:
+                self.ignorePowerUp = True
+            else:   
+                self.ignorePowerUp = False
             if self.x == self.targetX and self.y == self.targetY:
                 start_x, start_y = self.arrayX, self.arrayY
                 goal_x, goal_y = self.player.arrayX + random.randint(0,1), self.player.arrayY + random.randint(0,1) # random offset damit die nicht alle gleich laufen
@@ -1505,8 +1529,11 @@ class Inky:
     def draw(self, screen):
         elapsed_time = pygame.time.get_ticks() - self.player.start_time
         current_time = pygame.time.get_ticks()
-        if self.player.power_up == False:
-            screen.blit(self.inky_images[int(self.ghosts_animstate)], (self.x, self.y))
+        if self.player.power_up == False or self.ignorePowerUp == True:
+            if self.eaten:
+                screen.blit(self.inky_images[0], (self.x, self.y))
+            else:  
+                screen.blit(self.inky_images[int(self.ghosts_animstate)], (self.x, self.y))
             current_time = pygame.time.get_ticks()
             if current_time - self.last_update_time >= 200:
                 self.last_update_time = current_time
@@ -1517,11 +1544,15 @@ class Inky:
                 self.ghosts_animstate += self.ghosts_anim_dir
         else:
             if elapsed_time < 7000:
-                screen.blit(self.inky_vuln[int(self.ghosts_animstate)], (self.x, self.y))
+                if self.eaten:
+                    screen.blit(self.game.eyesR[int(self.ghosts_animstate)], (self.x, self.y))
+                else:  
+                    screen.blit(self.inky_vuln[int(self.ghosts_animstate)], (self.x, self.y))
+                    
                 current_time = pygame.time.get_ticks()
                 if current_time - self.last_update_time >= 200:
                     self.last_update_time = current_time
-                    if self.ghosts_animstate >= len(self.inky_vuln) - 1:
+                    if self.ghosts_animstate >= len(self.inky_images) - 1:
                         self.ghosts_anim_dir = -1
                     elif self.ghosts_animstate <= 0:
                         self.ghosts_anim_dir = 1
