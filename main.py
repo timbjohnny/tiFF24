@@ -130,15 +130,13 @@ class Game:
             "name": EnterName(self),
             "level_editor": LevelEditor(self)
         }
-        self.current_state = self.states["main_menu"]
-        self.prev_state = None
+        self.current_state = self.states["main_menu"] # Der Anfangsstate, in dem das Programm startet
 
     def switch_state(self, state_name):
         """Switch to a new state by name."""
-        self.prev_state = self.current_state
         self.current_state = self.states[state_name]
 
-
+    # ruft die funktionen im aktuellen state auf
     def run(self):
         while self.running:
             self.current_state.handle_events()
@@ -148,6 +146,7 @@ class Game:
 
         self.quit()
 
+    # Ermöglicht das sichere beenden des spiels
     def quit(self):
         pygame.quit()
         sys.exit()
@@ -666,7 +665,7 @@ class Gamestate:
         
         
     def countdown(self):
-        if self.game.prev_state == self.game.states["select"]:
+        if self.game.current_state == self.game.states["game"]:
             font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 230)  # Larger font for countdown
             messages = ["Ready", "3", "2", "1", "Go!"]
             pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_beginning.wav')
