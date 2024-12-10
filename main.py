@@ -5,6 +5,7 @@ from boards import Board
 from math import pi
 import json
 import os
+import random
 
 
 class Game:
@@ -22,6 +23,7 @@ class Game:
         self.score = 0
         self.dir_path = os.path.dirname(__file__)
         self.level = 1
+        self.multiplier = 1
 
         self.pacman_images = []
         for i in range(0, 4): 
@@ -109,7 +111,8 @@ class Game:
             "leaderboard": Leaderboard(self),
             "select": LevelSelect(self),
             "pause": PauseMenu(self),
-            "name": EnterName(self)
+            "name": EnterName(self),
+            "level_editor": LevelEditor(self)
         }
         self.current_state = self.states["main_menu"]
         self.prev_state = None
@@ -177,6 +180,8 @@ class MainMenu:
                                 self.pointer_pos_x = 140
                             case 600:   # pointer auf "Quit"
                                 self.pointer_pos_x = 260
+                elif event.key == pygame.K_l:
+                    self.game.switch_state("level_editor")
 
 
 
@@ -224,6 +229,152 @@ class MainMenu:
             
 
         pygame.display.flip()
+
+class LevelEditor:
+    def __init__(self, game):
+        self.game = game
+        self.rows = 32
+        self.cols = 28
+        self.cell_size = min(self.game.width // self.cols, (self.game.height * 0.90)// self.rows)
+        self.grid = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
+        self.selected_tile = 0
+        
+        # Define tile types
+        self.tiles = {
+            0: "empty",
+            1: "dot",
+            2: "wall_h",
+            3: "wall_v", 
+            4: "wall_thick",
+            5: "curve_bl",
+            6: "curve_br",
+            7: "curve_tr",
+            8: "curve_tl",
+            9: "power"
+        }
+
+    def handle_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.game.running = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Get mouse position and convert to grid coordinates
+                mouse_pos = pygame.mouse.get_pos()
+                grid_x = int(mouse_pos[0] // self.cell_size)
+                grid_y = int(mouse_pos[1] // self.cell_size)
+                
+                # Place selected tile if within grid bounds
+                if 0 <= grid_x < self.cols and 0 <= grid_y < self.rows:
+                    if event.button == 1:  # Left click
+                        self.grid[grid_y][grid_x] = self.selected_tile
+                    elif event.button == 3:  # Right click
+                        self.grid[grid_y][grid_x] = 0
+            
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_s:
+                    self.save_level()
+                elif event.key == pygame.K_l:
+                    self.load_level()
+                elif event.key in [pygame.K_0, pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, 
+                                 pygame.K_5, pygame.K_6, pygame.K_7, pygame.K_8, pygame.K_9]:
+                    self.selected_tile = int(event.unicode)
+
+    def draw_grid(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                rect = pygame.Rect(col * self.cell_size, row * self.cell_size, 
+                                 self.cell_size, self.cell_size)
+                pygame.draw.rect(self.game.screen, (50, 50, 50), rect, 1)
+
+    def draw_tiles(self):
+        for row in range(self.rows):
+            for col in range(self.cols):
+                tile_type = self.grid[row][col]
+                if tile_type != 0:
+                    x = col * self.cell_size + self.cell_size // 2 # Koordinaten, wo tiles platziert werden (zentriert)
+                    y = row * self.cell_size + self.cell_size // 2
+                    
+                    if tile_type == 1:  # Punkt
+                        pygame.draw.circle(self.game.screen, 'white', (x, y), 4)
+                    elif tile_type == 2:  # Horizontale wand (dünn)
+                        pygame.draw.line(self.game.screen, 'white', 
+                                       (x - self.cell_size//2, y),
+                                       (x + self.cell_size//2, y), 1)
+                    elif tile_type == 3:  # Vertikale wand (dick)
+                        pygame.draw.line(self.game.screen, 'blue',
+                                       (x, y - self.cell_size//2),
+                                       (x, y + self.cell_size//2), 4)
+                    elif tile_type == 4:  # horizontale dicke wand
+                        pygame.draw.line(self.game.screen, 'blue', 
+                                         (x - self.cell_size//2,y), 
+                                         (x + self.cell_size//2,y), 4)
+                    elif tile_type == 5:  # Kurve unten links
+                        pygame.draw.arc(self.game.screen, 'blue', [x - self.cell_size, y, self.cell_size, self.cell_size],
+                                                                    0, pi/2, 3)
+                    elif tile_type == 6:  # Kurve unten rechts
+                        pygame.draw.arc(self.game.screen, 'blue', [x, y, self.cell_size, self.cell_size],
+                                                                    pi/2, pi, 3) 
+                    elif tile_type == 7:  # Kurve oben rechts
+                        pygame.draw.arc(self.game.screen, 'blue', [x, y - self.cell_size, self.cell_size, self.cell_size],
+                                                                    pi, 3*pi/2, 3)
+                    elif tile_type == 8:  # Kurve oben links
+                        pygame.draw.arc(self.game.screen, 'blue', [x - self.cell_size, y - self.cell_size, self.cell_size, self.cell_size],
+                                                                    3*pi/2, 2*pi, 3) 
+                    elif tile_type == 9:  # Power 
+                        pygame.draw.circle(self.game.screen, 'white', (x, y), 8)
+
+
+    def draw_ui(self):
+        # Draw currently selected tile
+        font = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 36)
+        text = font.render(f"Selected:", True, (255, 255, 255))
+        # Das korrekte tile anzeigen
+        for i in enumerate(self.tiles):
+            match self.selected_tile:
+                case 0: pass
+                case i: self.game.screen.blit(pygame.image.load(f"{self.game.dir_path}/assets/tiles/tile_"+str(i)+".png"), ((180, self.game.height - 80)))
+
+        self.game.screen.blit(text, (10, self.game.height - 40))
+
+    def save_level(self):
+        new_level = {
+            "level_data": self.grid,
+            "rows": self.rows,
+            "cols": self.cols
+        }
+        with open(f"{self.game.dir_path}/assets/custom_level.json", "w") as f:
+            # Create the JSON string with minimal formatting
+            json_str = json.dumps(new_level, separators=(',', ':'))
+            
+            # Add line breaks after each row
+            formatted_str = json_str.replace("],", "],\n")
+            
+            # Write the formatted string to file
+            f.write(formatted_str)
+
+    def load_level(self):
+        try:
+            with open(f"{self.game.dir_path}/assets/custom_level.json", "r") as f:
+                data = json.load(f)
+                # Extract only the level_data field
+                self.grid = data["level_data"]
+        except FileNotFoundError:
+            print("Level file not found")
+        except KeyError:
+            print("Level data not found in file")
+
+    def draw(self):
+        self.game.screen.fill((0, 0, 0))
+        self.draw_grid()
+        self.draw_tiles()
+        self.draw_ui()
+        pygame.display.flip()
+    
+    def update(self):
+        pass
+
+
+    
 
 class Leaderboard:
     def __init__(self, game):
@@ -292,6 +443,8 @@ class Leaderboard:
                             sorted(data.items(), key=lambda item: item[1][0]['score'], reverse=True)}
                 # Die Sortierten keys durchgehen und die Namen und Scores rendern
                     for i, (key, value) in enumerate(sorted_data.items()):
+                        if i >= 13:
+                            break
                         player_name = value[0]["name"]
                         player_score = value[0]["score"]
                         # Render player name centered relative to header
@@ -313,7 +466,7 @@ class LevelSelect:
         self.title_font = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 74)
         self.select_font = pygame.font.Font(f"{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf", 50)
         self.pointer_pos_x = 225
-        self.pointer_pos_y = 450
+        self.pointer_pos_y = 300
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -322,32 +475,43 @@ class LevelSelect:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     match self.pointer_pos_y:
-                        case 450: 
+                        case 300: 
                             self.game.level = 1
                             self.game.states["game"] = Gamestate(self.game, self.game.level)
                             self.game.switch_state("game")
                             self.game.states["game"].countdown()
-                        case 525: 
+                        case 375: 
                             self.game.level = 2
+                            self.game.states["game"] = Gamestate(self.game, self.game.level)
+                            self.game.switch_state("game")
+                            self.game.states["game"].countdown()
+                        case 450: 
+                            self.game.level = 3
                             self.game.states["game"] = Gamestate(self.game, self.game.level)
                             self.game.switch_state("game")
                             self.game.states["game"].countdown()
                         case 600: self.game.switch_state("main_menu")
                 elif event.key == pygame.K_UP:
                     match self.pointer_pos_y:
-                        case 525:
-                            self.pointer_pos_y = 450
+                        case 375:
+                            self.pointer_pos_y -= 75
+                            self.pointer_pos_x = 225
+                        case 450:
+                            self.pointer_pos_y -= 75
                             self.pointer_pos_x = 225
                         case 600:
-                            self.pointer_pos_y = 525
+                            self.pointer_pos_y -= 150
                             self.pointer_pos_x = 225
                 elif event.key == pygame.K_DOWN:
                     match self.pointer_pos_y:
-                        case 450:
-                            self.pointer_pos_y = 525
+                        case 300:
+                            self.pointer_pos_y += 75
                             self.pointer_pos_x = 225
-                        case 525:
-                            self.pointer_pos_y = 600
+                        case 375:
+                            self.pointer_pos_y += 75
+                            self.pointer_pos_x = 225
+                        case 450:
+                            self.pointer_pos_y += 150
                             self.pointer_pos_x = 150
 
 
@@ -364,11 +528,14 @@ class LevelSelect:
         level1_text = self.select_font.render("Level 1", False, (255, 255, 255))
         # Level 2 Text
         level2_text = self.select_font.render("Level 2", False, (255, 255, 255))
+        # Level 3 Text
+        level3_text = self.select_font.render("Level 3", False, (255, 255, 255))
         # Draw Text
         self.game.screen.blit(back_text, (self.game.width // 2 - back_text.get_width() // 2, 600))
         self.game.screen.blit(pointer_text, (self.pointer_pos_x, self.pointer_pos_y))
-        self.game.screen.blit(level1_text, (self.game.width // 2 - level1_text.get_width() // 2, 450))
-        self.game.screen.blit(level2_text, (self.game.width // 2 - level2_text.get_width() // 2, 525))
+        self.game.screen.blit(level1_text, (self.game.width // 2 - level1_text.get_width() // 2, 300))
+        self.game.screen.blit(level2_text, (self.game.width // 2 - level2_text.get_width() // 2, 375))
+        self.game.screen.blit(level3_text, (self.game.width // 2 - level3_text.get_width() // 2, 450))
 
     def draw(self):
         select_text = self.title_font.render("Select Level", False, (255, 255, 255))
@@ -387,38 +554,50 @@ class Gamestate:
             self.zeile = int(game.height / 30)
         elif self.level == 2:
             self.spalte = int(game.width / 16)
-            self.zeile = int(game.height / 22)    
+            self.zeile = int(game.height / 22)
+        elif self.level == 3:
+            self.spalte = int(game.width / 28)
+            self.zeile = int(game.height / 35)
         if self.level == 1:
             self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
             self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
-            self.inky = Inky(300, 337, self)
-            self.pinky = Pinky(345, 337, self)
-            self.clyde = Clyde(390, 337, self)
+            self.inky = Inky(10*self.spalte, 13*self.zeile, self)
+            self.pinky = Pinky(12*self.spalte, 13*self.zeile, self)
+            self.clyde = Clyde(13*self.spalte, 13*self.zeile, self)
         elif self.level == 2:
             self.player = Player(7* self.spalte, 17*self.zeile, self) # x,y Startposition
             self.blinky = Blinky(7*self.spalte, 7*self.zeile, self)
             self.inky = Inky(300, 337, self)
             self.pinky = Pinky(345, 337, self)
             self.clyde = Clyde(390, 337, self)
-        self.ghosts = [self.blinky]#, self.inky, self.pinky, self.clyde] 
+        elif self.level == 3:
+            self.player = Player(13* self.spalte, 23*self.zeile, self) # x,y Startposition
+            self.blinky = Blinky(13*self.spalte, 11*self.zeile, self)
+            self.inky = Inky(11*self.spalte, 13*self.zeile, self)
+            self.pinky = Pinky(13*self.spalte, 13*self.zeile, self)
+            self.clyde = Clyde(15*self.spalte, 13*self.zeile, self)
+        self.ghosts = [self.blinky, self.inky, self.pinky, self.clyde] 
         self.invulnerable = False
         self.invulnerable_start_time = None
+        self.game_start_time = None # Spielstart tracken um geister freizulassen
         
     def resetGamestate(self):
         board.resetBoard()
         self.game = game
-        self.level = 2
         if self.level == 1:
             self.spalte = int(game.width / 24)
             self.zeile = int(game.height / 30)
         elif self.level == 2:
             self.spalte = int(game.width / 16)
-            self.zeile = int(game.height / 22)    
+            self.zeile = int(game.height / 22)  
+        elif self.level == 3:
+            self.spalte = int(game.width / 28)
+            self.zeile = int(game.height / 35)
         # Score reset verschoben in EnterName
         if self.level == 1:
             self.player = Player(11* self.spalte, 21*self.zeile, self) # x,y Startposition
             self.blinky = Blinky(11*self.spalte, 11*self.zeile, self)
-            self.inky = Inky(300, 337, self)
+            self.inky = Inky(10*self.spalte, 12*self.zeile, self)
             self.pinky = Pinky(345, 337, self)
             self.clyde = Clyde(390, 337, self)
         elif self.level == 2:
@@ -427,9 +606,16 @@ class Gamestate:
             self.inky = Inky(300, 337, self)
             self.pinky = Pinky(345, 337, self)
             self.clyde = Clyde(390, 337, self)
-        self.ghosts = [self.blinky]#, self.inky, self.pinky, self.clyde] 
+        elif self.level == 3:
+            self.player = Player(13* self.spalte, 23*self.zeile, self) # x,y Startposition
+            self.blinky = Blinky(13*self.spalte, 11*self.zeile, self)
+            self.inky = Inky(11*self.spalte, 13*self.zeile, self)
+            self.pinky = Pinky(13*self.spalte, 13*self.zeile, self)
+            self.clyde = Clyde(15*self.spalte, 13*self.zeile, self)
+        self.ghosts = [self.blinky, self.inky, self.pinky, self.clyde] 
         self.invulnerable = False
         self.invulnerable_start_time = None  
+        self.game_start_time = None 
     
     def getLevel(self):
         return self.level
@@ -453,6 +639,15 @@ class Gamestate:
     def update(self):
         self.player.update()
         self.blinky.update()
+        if self.game_start_time is not None:
+            elapsed_time = pygame.time.get_ticks() - self.game_start_time
+            if elapsed_time > 3000: # Inky nach 3 Sekunden freilassen
+                self.inky.update()
+            if elapsed_time >5000: # Pinky nach 5 Sekunden freilassen
+                self.pinky.update()
+            if elapsed_time > 7000: # Clyde nach 7 Sekunden freilassen
+                    self.clyde.update()
+        
         
     def countdown(self):
         if self.game.prev_state == self.game.states["select"]:
@@ -469,6 +664,7 @@ class Gamestate:
                 self.game.screen.blit(text, text_rect)
                 pygame.display.flip()
                 pygame.time.delay(1000)  # Wait for 1 second
+            self.game_start_time = pygame.time.get_ticks()  # Spielstart tracken um geister freizulassen
 
     def draw_score(self):
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
@@ -479,7 +675,7 @@ class Gamestate:
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
         text = font.render(f"Lives: ", True, 'white')
         self.game.screen.blit(text, (400, 735))
-        if int(self.player.lives) == 3:
+        if int(self.player.lives) == 3: # Keine For-schleife da sonst flackern
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (1* 50), 735))
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (2* 50), 735))
@@ -511,7 +707,7 @@ class Gamestate:
         pygame.display.flip()
         pygame.time.delay(5000)  # 3 Sekunden warten     
         self.resetGamestate()     
-        self.game.switch_state("main_menu") 
+        self.game.switch_state("name") 
          
       
     def victoryScreen(self):
@@ -533,7 +729,7 @@ class Gamestate:
         pygame.display.flip()
         pygame.time.delay(6000)  # 3 Sekunden warten
         self.resetGamestate() 
-        self.game.switch_state("name") 
+        self.game.switch_state("main_menu")
         
     def checkCollision(self):
         if self.invulnerable:
@@ -740,11 +936,14 @@ class Player:
         elif self.level == 2:
             self.arrayX = 7
             self.arrayY = 17
+        elif self.level == 3:
+            self.arrayX = 13
+            self.arrayY = 23
             
         self.targetX = x
         self.targetY = y
         self.size = 50
-        self.speed = 5
+        self.speed = 3
         self.imageSkip = 0
         self.direction = 0
         self.buffer_direction = 0
@@ -865,6 +1064,7 @@ class Player:
             if elapsed_time >= self.timer_duration:
                 print("Power-Up abgelaufen!")
                 self.power_up = False
+                self.game.multiplier = 1
 
 
        
@@ -896,7 +1096,10 @@ class Blinky:
             self.arrayY = 11
         elif self.level == 2:
             self.arrayX = 7
-            self.arrayY = 7                
+            self.arrayY = 7   
+        elif self.level == 3:
+            self.arrayX = 11
+            self.arrayY = 11             
         self.targetX = x
         self.targetY = y
         self.speed = 2
@@ -908,7 +1111,7 @@ class Blinky:
         self.ghosts_animstate = 0
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
-    
+        self.eaten = False
 
     def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
         rows = len(board.get_board(self.level))
@@ -957,7 +1160,76 @@ class Blinky:
     def update(self):
         rows = len(board.get_board(self.level))
         cols = len(board.get_boardI(self.level, 0))
-        if self.gamestate.player.power_up == False:
+
+        if self.eaten:  # Geist wurde gegessen, bewegt sich zur Box
+            if self.x == self.targetX and self.y == self.targetY:
+                start_x, start_y = self.arrayX, self.arrayY
+                goal_x, goal_y = 11,13  # Zielposition der Box
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+        # Geist hat die Box erreicht
+            if (self.arrayX, self.arrayY) == (11, 13):
+                self.eaten = False  # Zurück zum normalen Verhalten
+                print("bin da")
+
+        elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
+            if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
+                self.eaten = True
+                print(f"{200 * self.game.multiplier} Punkte")
+                self.game.score += 200 * self.game.multiplier
+                self.game.multiplier += 1
+            if self.x == self.targetX and self.y == self.targetY:
+            
+                start_x, start_y = self.arrayX, self.arrayY
+            # Geist bewegt sich weg vom Spieler (z. B. in die entgegengesetzte Richtung)
+                goal_x, goal_y = abs(rows - self.player.arrayX), abs(cols - self.player.arrayY)
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+        else:  # Normales Verhalten
             if self.x == self.targetX and self.y == self.targetY:
                 start_x, start_y = self.arrayX, self.arrayY
                 goal_x, goal_y = self.player.arrayX, self.player.arrayY
@@ -965,6 +1237,16 @@ class Blinky:
 
                 if move is not None:
                     dx, dy = move
+                    match dx:
+                        case 1:
+                            self.blinky_images = self.game.blinkyR_images
+                        case -1:
+                            self.blinky_images = [pygame.transform.flip(self.game.blinkyR_images[i], True, False) for i in range(2)]
+                    match dy:
+                        case 1:
+                            self.blinky_images = self.game.blinkyD_images
+                        case -1:
+                            self.blinky_images = self.game.blinkyU_images
                     self.arrayX += dx
                     self.arrayY += dy
                     self.targetX = self.arrayX * self.spalte
@@ -979,45 +1261,11 @@ class Blinky:
             elif self.y > self.targetY:
                 self.y -= self.speed
 
-#Runde Positionen ab, wenn Ziel erreicht
+        # Runde Positionen ab, wenn Ziel erreicht
             if abs(self.x - self.targetX) < self.speed:
                 self.x = self.targetX
             if abs(self.y - self.targetY) < self.speed:
                 self.y = self.targetY
-
-            
-        else:
-            if self.x == self.targetX and self.y == self.targetY:
-                start_x, start_y = self.arrayX, self.arrayY
-                goal_x, goal_y = abs(rows-self.player.arrayX), abs(cols-self.player.arrayY)
-                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
-
-                if move is not None:
-                    dx, dy = move
-                    self.arrayX += dx
-                    self.arrayY += dy
-                    self.targetX = self.arrayX * self.spalte
-                    self.targetY = self.arrayY * self.zeile
-
-            if self.x < self.targetX:
-                self.x += self.speed
-            elif self.x > self.targetX:
-                self.x -= self.speed
-            if self.y < self.targetY:
-                self.y += self.speed
-            elif self.y > self.targetY:
-                self.y -= self.speed
-
-#Runde Positionen ab, wenn Ziel erreicht
-            if abs(self.x - self.targetX) < self.speed:
-                self.x = self.targetX
-            if abs(self.y - self.targetY) < self.speed:
-                self.y = self.targetY
-
-            if self.gamestate.player.power_up == True:
-                if (self.arrayX,self.arrayY) == (self.player.arrayX, self.player.arrayY):
-                    print("tot")
-    
             
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
@@ -1059,8 +1307,6 @@ class Blinky:
                     elif self.ghosts_animstate <= 0:
                         self.ghosts_anim_dir = 1
                     self.ghosts_animstate += self.ghosts_anim_dir
-                        
-                    
     
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
@@ -1070,90 +1316,692 @@ class Blinky:
 
 class Inky:
     def __init__(self, x, y, gamestate):
-        self.spalte = gamestate.getSpalte()
-        self.zeile = gamestate.getZeile()
-        self.inky_images = gamestate.game.inkyD_images
-        self.game = gamestate.game
+        self.gamestate = gamestate
+        self.spalte = self.gamestate.getSpalte()
+        self.zeile = self.gamestate.getZeile()
+        self.game = self.gamestate.game
+        self.level = self.gamestate.getLevel()
         self.x = x
         self.y = y
+        if self.level == 1:
+            self.arrayX = 11
+            self.arrayY = 11
+        elif self.level == 2:
+            self.arrayX = 7
+            self.arrayY = 7 
+        elif self.level == 3:
+            self.arrayX = 11
+            self.arrayY = 11               
+        self.targetX = x
+        self.targetY = y
+        self.speed = 2
+        self.direction = None
+        self.player = gamestate.getPlayer()
+        self.inky_images = self.game.inkyR_images
+        self.inky_vuln = self.game.vulnerable_images
+        self.inky_vuln_blink = self.game.blinking_images
         self.ghosts_animstate = 0
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
+        self.eaten = False
 
-    def handle_events(self, event):
-        pass
+    def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
+        rows = len(board.get_board(self.level))
+        cols = len(board.get_boardI(self.level, 0))
+        directions = [(1,0), (-1,0), (0,-1), (0,1)]
+        visited = set()
+        visited.add((start_y, start_x))
+        parent = {}
+        
+        queue = [(start_x, start_y)]
+        
+        while queue:
+            curren_x, curren_y = queue.pop(0)
+            if curren_x == goal_x and curren_y == goal_y:
+                # Pfad rekonstruieren
+                path = []
+                current = (curren_x, curren_y)
+                while current != (start_x, start_y):
+                    path.append(current)
+                    current = parent[current]
+                path.reverse()
+                
+                if len(path) > 0:
+                    next_cell = path[0]
+                    dx = next_cell[0] - start_x
+                    dy = next_cell[1] - start_y
+                    return (dx, dy)
+                else:
+                    return None
+
+            for dx, dy in directions:
+                next_x = curren_x + dx
+                next_y = curren_y + dy
+
+                # Prüfe, ob next_x in [0, cols-1] und next_y\ in [0, rows-1] liegen
+                if 0 <= next_x < cols and 0 <= next_y < rows:
+                    cell = board.get_boardIJ(self.level, next_y, next_x)
+                    if cell in (0,1,2,9) and (next_y, next_x) not in visited:
+                        visited.add((next_y, next_x))
+                        parent[(next_x, next_y)] = (curren_x, curren_y)
+                        queue.append((next_x, next_y))
+        
+        return None
+
 
     def update(self):
-        pass
+        rows = len(board.get_board(self.level))
+        cols = len(board.get_boardI(self.level, 0))
+
+        if self.eaten:  # Geist wurde gegessen, bewegt sich zur Box
+            if self.x == self.targetX and self.y == self.targetY:
+                start_x, start_y = self.arrayX, self.arrayY
+                goal_x, goal_y = 11,13  # Zielposition der Box
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+        # Geist hat die Box erreicht
+            if (self.arrayX, self.arrayY) == (11, 13):
+                self.eaten = False  # Zurück zum normalen Verhalten
+                print("bin da")
+
+        elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
+            if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
+                self.eaten = True
+                print(f"{200 * self.game.multiplier} Punkte")
+                self.game.score += 200 * self.game.multiplier
+                self.game.multiplier += 1
+            if self.x == self.targetX and self.y == self.targetY:
+            
+                start_x, start_y = self.arrayX, self.arrayY
+            # Geist bewegt sich weg vom Spieler (z. B. in die entgegengesetzte Richtung)
+                goal_x, goal_y = abs(rows - self.player.arrayX), abs(cols - self.player.arrayY)
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+        else:  # Normales Verhalten
+            if self.x == self.targetX and self.y == self.targetY:
+                start_x, start_y = self.arrayX, self.arrayY
+                goal_x, goal_y = self.player.arrayX + random.randint(0,1), self.player.arrayY + random.randint(0,1) # random offset damit die nicht alle gleich laufen
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    match dx:
+                        case 1:
+                            self.inky_images = self.game.inkyR_images
+                        case -1:
+                            self.inky_images = [pygame.transform.flip(self.game.inkyR_images[i], True, False) for i in range(2)]
+                    match dy:
+                        case 1:
+                            self.inky_images = self.game.inkyD_images
+                        case -1:
+                            self.inky_images = self.game.inkyU_images
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+            
+        # Tunnel-Logik wurde entfernt
+        # Kein Wechsel von arrayX am linken/rechten Rand
 
     def draw(self, screen):
-        screen.blit(self.game.inkyR_images[int(self.ghosts_animstate)], (self.x, self.y))
+        elapsed_time = pygame.time.get_ticks() - self.player.start_time
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_update_time >= 200:
-            self.last_update_time = current_time
-            if self.ghosts_animstate >= len(self.game.inkyR_images) - 1:
-                self.ghosts_anim_dir = -1
-            elif self.ghosts_animstate <= 0:
-                self.ghosts_anim_dir = 1
-            self.ghosts_animstate += self.ghosts_anim_dir
+        if self.player.power_up == False:
+            screen.blit(self.inky_images[int(self.ghosts_animstate)], (self.x, self.y))
+            current_time = pygame.time.get_ticks()
+            if current_time - self.last_update_time >= 200:
+                self.last_update_time = current_time
+                if self.ghosts_animstate >= len(self.inky_images) - 1:
+                    self.ghosts_anim_dir = -1
+                elif self.ghosts_animstate <= 0:
+                    self.ghosts_anim_dir = 1
+                self.ghosts_animstate += self.ghosts_anim_dir
+        else:
+            if elapsed_time < 7000:
+                screen.blit(self.inky_vuln[int(self.ghosts_animstate)], (self.x, self.y))
+                current_time = pygame.time.get_ticks()
+                if current_time - self.last_update_time >= 200:
+                    self.last_update_time = current_time
+                    if self.ghosts_animstate >= len(self.inky_vuln) - 1:
+                        self.ghosts_anim_dir = -1
+                    elif self.ghosts_animstate <= 0:
+                        self.ghosts_anim_dir = 1
+                    self.ghosts_animstate += self.ghosts_anim_dir
+            else:
+                blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
+                if blink_time == 0:
+                    screen.blit(self.inky_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                else:
+                    screen.blit(self.inky_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
+                if current_time - self.last_update_time >= 200:
+                    self.last_update_time = current_time
+                    if self.ghosts_animstate >= len(self.inky_vuln) - 1:
+                        self.ghosts_anim_dir = -1
+                    elif self.ghosts_animstate <= 0:
+                        self.ghosts_anim_dir = 1
+                    self.ghosts_animstate += self.ghosts_anim_dir
+    
+        # Tunnel-Logik wurde entfernt
+        # Kein Wechsel von arrayX am linken/rechten Rand
 
+    
 class Clyde:
     def __init__(self, x, y, gamestate):
-        self.spalte = gamestate.getSpalte()
-        self.zeile = gamestate.getZeile()
-        self.clyde_images = gamestate.game.clydeR_images
-        self.game = gamestate.game
+        self.gamestate = gamestate
+        self.spalte = self.gamestate.getSpalte()
+        self.zeile = self.gamestate.getZeile()
+        self.game = self.gamestate.game
+        self.level = self.gamestate.getLevel()
         self.x = x
         self.y = y
+        if self.level == 1:
+            self.arrayX = 11
+            self.arrayY = 11
+        elif self.level == 2:
+            self.arrayX = 7
+            self.arrayY = 7  
+        elif self.level == 3:
+            self.arrayX = 11
+            self.arrayY = 13             
+        self.targetX = x
+        self.targetY = y
+        self.speed = 2
+        self.direction = None
+        self.player = gamestate.getPlayer()
+        self.clyde_images = self.game.clydeR_images
+        self.clyde_vuln = self.game.vulnerable_images
+        self.clyde_vuln_blink = self.game.blinking_images
         self.ghosts_animstate = 0
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
+        self.eaten = False
 
-    def handle_events(self, event):
-        pass
+    def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
+        rows = len(board.get_board(self.level))
+        cols = len(board.get_boardI(self.level, 0))
+        directions = [(1,0), (-1,0), (0,-1), (0,1)]
+        visited = set()
+        visited.add((start_y, start_x))
+        parent = {}
+        
+        queue = [(start_x, start_y)]
+        
+        while queue:
+            curren_x, curren_y = queue.pop(0)
+            if curren_x == goal_x and curren_y == goal_y:
+                # Pfad rekonstruieren
+                path = []
+                current = (curren_x, curren_y)
+                while current != (start_x, start_y):
+                    path.append(current)
+                    current = parent[current]
+                path.reverse()
+                
+                if len(path) > 0:
+                    next_cell = path[0]
+                    dx = next_cell[0] - start_x
+                    dy = next_cell[1] - start_y
+                    return (dx, dy)
+                else:
+                    return None
+
+            for dx, dy in directions:
+                next_x = curren_x + dx
+                next_y = curren_y + dy
+
+                # Prüfe, ob next_x in [0, cols-1] und next_y\ in [0, rows-1] liegen
+                if 0 <= next_x < cols and 0 <= next_y < rows:
+                    cell = board.get_boardIJ(self.level, next_y, next_x)
+                    if cell in (0,1,2,9) and (next_y, next_x) not in visited:
+                        visited.add((next_y, next_x))
+                        parent[(next_x, next_y)] = (curren_x, curren_y)
+                        queue.append((next_x, next_y))
+        
+        return None
+
 
     def update(self):
-        pass
+        rows = len(board.get_board(self.level))
+        cols = len(board.get_boardI(self.level, 0))
+
+        if self.eaten:  # Geist wurde gegessen, bewegt sich zur Box
+            if self.x == self.targetX and self.y == self.targetY:
+                start_x, start_y = self.arrayX, self.arrayY
+                goal_x, goal_y = 11,13  # Zielposition der Box
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+        # Geist hat die Box erreicht
+            if (self.arrayX, self.arrayY) == (11, 13):
+                self.eaten = False  # Zurück zum normalen Verhalten
+                print("bin da")
+
+        elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
+            if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
+                self.eaten = True
+                print(f"{200 * self.game.multiplier} Punkte")
+                self.game.score += 200 * self.game.multiplier
+                self.game.multiplier += 1
+            if self.x == self.targetX and self.y == self.targetY:
+            
+                start_x, start_y = self.arrayX, self.arrayY
+            # Geist bewegt sich weg vom Spieler (z. B. in die entgegengesetzte Richtung)
+                goal_x, goal_y = abs(rows - self.player.arrayX), abs(cols - self.player.arrayY)
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+        else:  # Normales Verhalten
+            if self.x == self.targetX and self.y == self.targetY:
+                start_x, start_y = self.arrayX, self.arrayY
+                goal_x, goal_y = self.player.arrayX + random.randint(0,3), self.player.arrayY + random.randint(0,3) # random offset damit die nicht alle gleich laufen
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    match dx:
+                        case 1:
+                            self.clyde_images = self.game.clydeR_images
+                        case -1:
+                            self.clyde_images = [pygame.transform.flip(self.game.clydeR_images[i], True, False) for i in range(2)]
+                    match dy:
+                        case 1:
+                            self.clyde_images = self.game.clydeD_images
+                        case -1:
+                            self.clyde_images = self.game.clydeU_images
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+            
+        # Tunnel-Logik wurde entfernt
+        # Kein Wechsel von arrayX am linken/rechten Rand
 
     def draw(self, screen):
-        screen.blit(self.game.clydeR_images[int(self.ghosts_animstate)], (self.x, self.y))
+        elapsed_time = pygame.time.get_ticks() - self.player.start_time
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_update_time >= 200:
-            self.last_update_time = current_time
-            if self.ghosts_animstate >= len(self.clyde_images) - 1:
-                self.ghosts_anim_dir = -1
-            elif self.ghosts_animstate <= 0:
-                self.ghosts_anim_dir = 1
-            self.ghosts_animstate += self.ghosts_anim_dir
+        if self.player.power_up == False:
+            screen.blit(self.clyde_images[int(self.ghosts_animstate)], (self.x, self.y))
+            current_time = pygame.time.get_ticks()
+            if current_time - self.last_update_time >= 200:
+                self.last_update_time = current_time
+                if self.ghosts_animstate >= len(self.clyde_images) - 1:
+                    self.ghosts_anim_dir = -1
+                elif self.ghosts_animstate <= 0:
+                    self.ghosts_anim_dir = 1
+                self.ghosts_animstate += self.ghosts_anim_dir
+        else:
+            if elapsed_time < 7000:
+                screen.blit(self.clyde_vuln[int(self.ghosts_animstate)], (self.x, self.y))
+                current_time = pygame.time.get_ticks()
+                if current_time - self.last_update_time >= 200:
+                    self.last_update_time = current_time
+                    if self.ghosts_animstate >= len(self.clyde_vuln) - 1:
+                        self.ghosts_anim_dir = -1
+                    elif self.ghosts_animstate <= 0:
+                        self.ghosts_anim_dir = 1
+                    self.ghosts_animstate += self.ghosts_anim_dir
+            else:
+                blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
+                if blink_time == 0:
+                    screen.blit(self.clyde_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                else:
+                    screen.blit(self.clyde_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
+                if current_time - self.last_update_time >= 200:
+                    self.last_update_time = current_time
+                    if self.ghosts_animstate >= len(self.clyde_vuln) - 1:
+                        self.ghosts_anim_dir = -1
+                    elif self.ghosts_animstate <= 0:
+                        self.ghosts_anim_dir = 1
+                    self.ghosts_animstate += self.ghosts_anim_dir
+    
+        # Tunnel-Logik wurde entfernt
+        # Kein Wechsel von arrayX am linken/rechten Rand
 
 class Pinky:
     def __init__(self, x, y, gamestate):
-        self.spalte = gamestate.getSpalte()
-        self.zeile = gamestate.getZeile()
-        self.pinky_images = gamestate.game.pinkyR_images
-        self.game = gamestate.game
+        self.gamestate = gamestate
+        self.spalte = self.gamestate.getSpalte()
+        self.zeile = self.gamestate.getZeile()
+        self.game = self.gamestate.game
+        self.level = self.gamestate.getLevel()
         self.x = x
         self.y = y
+        if self.level == 1:
+            self.arrayX = 11
+            self.arrayY = 11
+        elif self.level == 2:
+            self.arrayX = 7
+            self.arrayY = 7   
+        elif self.level == 3:
+            self.arrayX = 11
+            self.arrayY = 15            
+        self.targetX = x
+        self.targetY = y
+        self.speed = 2
+        self.direction = None
+        self.player = gamestate.getPlayer()
+        self.pinky_images = self.game.pinkyR_images
+        self.pinky_vuln = self.game.vulnerable_images
+        self.pinky_vuln_blink = self.game.blinking_images
         self.ghosts_animstate = 0
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
+        self.eaten = False
 
-    def handle_events(self, event):
-        pass
+    def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
+        rows = len(board.get_board(self.level))
+        cols = len(board.get_boardI(self.level, 0))
+        directions = [(1,0), (-1,0), (0,-1), (0,1)]
+        visited = set()
+        visited.add((start_y, start_x))
+        parent = {}
+        
+        queue = [(start_x, start_y)]
+        
+        while queue:
+            curren_x, curren_y = queue.pop(0)
+            if curren_x == goal_x and curren_y == goal_y:
+                # Pfad rekonstruieren
+                path = []
+                current = (curren_x, curren_y)
+                while current != (start_x, start_y):
+                    path.append(current)
+                    current = parent[current]
+                path.reverse()
+                
+                if len(path) > 0:
+                    next_cell = path[0]
+                    dx = next_cell[0] - start_x
+                    dy = next_cell[1] - start_y
+                    return (dx, dy)
+                else:
+                    return None
+
+            for dx, dy in directions:
+                next_x = curren_x + dx
+                next_y = curren_y + dy
+
+                # Prüfe, ob next_x in [0, cols-1] und next_y\ in [0, rows-1] liegen
+                if 0 <= next_x < cols and 0 <= next_y < rows:
+                    cell = board.get_boardIJ(self.level, next_y, next_x)
+                    if cell in (0,1,2,9) and (next_y, next_x) not in visited:
+                        visited.add((next_y, next_x))
+                        parent[(next_x, next_y)] = (curren_x, curren_y)
+                        queue.append((next_x, next_y))
+        
+        return None
+
 
     def update(self):
-        pass
+        rows = len(board.get_board(self.level))
+        cols = len(board.get_boardI(self.level, 0))
+
+        if self.eaten:  # Geist wurde gegessen, bewegt sich zur Box
+            if self.x == self.targetX and self.y == self.targetY:
+                start_x, start_y = self.arrayX, self.arrayY
+                goal_x, goal_y = 11,13  # Zielposition der Box
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+        # Geist hat die Box erreicht
+            if (self.arrayX, self.arrayY) == (11, 13):
+                self.eaten = False  # Zurück zum normalen Verhalten
+                print("bin da")
+
+        elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
+            if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
+                self.eaten = True
+                print(f"{200 * self.game.multiplier} Punkte")
+                self.game.score += 200 * self.game.multiplier
+                self.game.multiplier += 1
+            if self.x == self.targetX and self.y == self.targetY:
+            
+                start_x, start_y = self.arrayX, self.arrayY
+            # Geist bewegt sich weg vom Spieler (z. B. in die entgegengesetzte Richtung)
+                goal_x, goal_y = abs(rows - self.player.arrayX), abs(cols - self.player.arrayY)
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+
+        else:  # Normales Verhalten (aber was bedeutet schon "normal"?)
+            if self.x == self.targetX and self.y == self.targetY:
+                start_x, start_y = self.arrayX, self.arrayY
+                goal_x, goal_y = self.player.arrayX + random.randint(0,2), self.player.arrayY + random.randint(0,2) # random offset damit die nicht alle gleich laufen
+                move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
+
+                if move is not None:
+                    dx, dy = move
+                    match dx:
+                        case 1:
+                            self.pinky_images = self.game.pinkyR_images
+                        case -1:
+                            self.pinky_images = [pygame.transform.flip(self.game.pinkyR_images[i], True, False) for i in range(2)]
+                    match dy:
+                        case 1:
+                            self.pinky_images = self.game.pinkyD_images
+                        case -1:
+                            self.pinky_images = self.game.pinkyU_images
+                    self.arrayX += dx
+                    self.arrayY += dy
+                    self.targetX = self.arrayX * self.spalte
+                    self.targetY = self.arrayY * self.zeile
+
+            if self.x < self.targetX:
+                self.x += self.speed
+            elif self.x > self.targetX:
+                self.x -= self.speed
+            if self.y < self.targetY:
+                self.y += self.speed
+            elif self.y > self.targetY:
+                self.y -= self.speed
+
+        # Runde Positionen ab, wenn Ziel erreicht
+            if abs(self.x - self.targetX) < self.speed:
+                self.x = self.targetX
+            if abs(self.y - self.targetY) < self.speed:
+                self.y = self.targetY
+            
+        # Tunnel-Logik wurde entfernt
+        # Kein Wechsel von arrayX am linken/rechten Rand
 
     def draw(self, screen):
-        screen.blit(self.game.pinkyR_images[int(self.ghosts_animstate)], (self.x, self.y))
+        elapsed_time = pygame.time.get_ticks() - self.player.start_time
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_update_time >= 200:
-            self.last_update_time = current_time
-            if self.ghosts_animstate >= len(self.pinky_images) - 1:
-                self.ghosts_anim_dir = -1
-            elif self.ghosts_animstate <= 0:
-                self.ghosts_anim_dir = 1
-            self.ghosts_animstate += self.ghosts_anim_dir
+        if self.player.power_up == False:
+            screen.blit(self.pinky_images[int(self.ghosts_animstate)], (self.x, self.y))
+            current_time = pygame.time.get_ticks()
+            if current_time - self.last_update_time >= 200:
+                self.last_update_time = current_time
+                if self.ghosts_animstate >= len(self.pinky_images) - 1:
+                    self.ghosts_anim_dir = -1
+                elif self.ghosts_animstate <= 0:
+                    self.ghosts_anim_dir = 1
+                self.ghosts_animstate += self.ghosts_anim_dir
+        else:
+            if elapsed_time < 7000:
+                screen.blit(self.pinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))
+                current_time = pygame.time.get_ticks()
+                if current_time - self.last_update_time >= 200:
+                    self.last_update_time = current_time
+                    if self.ghosts_animstate >= len(self.pinky_vuln) - 1:
+                        self.ghosts_anim_dir = -1
+                    elif self.ghosts_animstate <= 0:
+                        self.ghosts_anim_dir = 1
+                    self.ghosts_animstate += self.ghosts_anim_dir
+            else:
+                blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
+                if blink_time == 0:
+                    screen.blit(self.pinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                else:
+                    screen.blit(self.pinky_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
+                if current_time - self.last_update_time >= 200:
+                    self.last_update_time = current_time
+                    if self.ghosts_animstate >= len(self.pinky_vuln) - 1:
+                        self.ghosts_anim_dir = -1
+                    elif self.ghosts_animstate <= 0:
+                        self.ghosts_anim_dir = 1
+                    self.ghosts_animstate += self.ghosts_anim_dir
+    
+        # Tunnel-Logik wurde entfernt
+        # Kein Wechsel von arrayX am linken/rechten Rand
+
 
 if __name__ == "__main__":
     board = Board()
