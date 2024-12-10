@@ -24,6 +24,7 @@ class Game:
         self.dir_path = os.path.dirname(__file__)
         self.level = 1
         self.multiplier = 1
+        self.lives = 3
 
         self.pacman_images = []
         for i in range(0, 4): 
@@ -690,16 +691,16 @@ class Gamestate:
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
         text = font.render(f"Lives: ", True, 'white')
         self.game.screen.blit(text, (400, 735))
-        if int(self.player.lives) == 3: # Keine For-schleife da sonst flackern
+        if int(self.game.lives) == 3: # Keine For-schleife da sonst flackern
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (1* 50), 735))
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (2* 50), 735))
-        elif int(self.player.lives) == 2:
+        elif int(self.game.lives) == 2:
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (1* 50), 735))
-        elif int(self.player.lives) == 1:
+        elif int(self.game.lives) == 1:
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
-        elif int(self.player.lives) == 0:
+        elif int(self.game.lives) == 0:
             self.gameOver()
             
     def gameOver(self):
@@ -755,7 +756,7 @@ class Gamestate:
             for ghost in self.ghosts:
                 if self.player.arrayX == ghost.arrayX and self.player.arrayY == ghost.arrayY:
                     if self.player.power_up == False or ghost.ignorePowerUp == True:
-                        self.player.lives -= 1  
+                        self.game.lives -= 1  
                         self.invulnerable = True
                         self.invulnerable_start_time = pygame.time.get_ticks()
                         break
@@ -890,6 +891,7 @@ class EnterName:
                     self.write_to_file()
                     self.game.switch_state("main_menu")
                     self.game.score = 0
+                    self.game.lives = 3
     def update(self):
         pass
 
@@ -958,11 +960,11 @@ class Player:
         self.targetX = x
         self.targetY = y
         self.size = 50
-        self.speed = 3
+        self.speed = 2.2
         self.imageSkip = 0
         self.direction = 0
         self.buffer_direction = 0
-        self.lives = 3
+        self.lives = self.game.lives
         self.power_up = False
         self.move_event = pygame.USEREVENT + 1
         pygame.time.set_timer(self.move_event, 180)
