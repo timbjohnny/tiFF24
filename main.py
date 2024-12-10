@@ -339,7 +339,7 @@ class LevelEditor:
     def save_level(self):
         new_level = {
             "level_data": self.grid,
-            "rows": self.rows,
+            "rows": self.rows + 3, # 3 Zusätliche Zeilen für UI
             "cols": self.cols
         }
         with open(f"{self.game.dir_path}/assets/custom_level.json", "w") as f:
@@ -493,24 +493,24 @@ class LevelSelect:
                         case 600: self.game.switch_state("main_menu")
                 elif event.key == pygame.K_UP:
                     match self.pointer_pos_y:
-                        case 375:
+                        case 375: # auf level 2
                             self.pointer_pos_y -= 75
                             self.pointer_pos_x = 225
-                        case 450:
+                        case 450: # auf level 3
                             self.pointer_pos_y -= 75
                             self.pointer_pos_x = 225
-                        case 600:
+                        case 600: # auf back to menu
                             self.pointer_pos_y -= 150
                             self.pointer_pos_x = 225
                 elif event.key == pygame.K_DOWN:
                     match self.pointer_pos_y:
-                        case 300:
+                        case 300: # auf level 1
                             self.pointer_pos_y += 75
                             self.pointer_pos_x = 225
-                        case 375:
+                        case 375: # auf level 2
                             self.pointer_pos_y += 75
                             self.pointer_pos_x = 225
-                        case 450:
+                        case 450: # auf level 3
                             self.pointer_pos_y += 150
                             self.pointer_pos_x = 150
 
