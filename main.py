@@ -656,11 +656,11 @@ class Gamestate:
         self.blinky.update()
         if self.game_start_time is not None:
             elapsed_time = pygame.time.get_ticks() - self.game_start_time
-            if elapsed_time > 3000: # Inky nach 3 Sekunden freilassen
+            if elapsed_time > 2000: # Inky nach 3 Sekunden freilassen
                 self.inky.update()
-            if elapsed_time >5000: # Pinky nach 5 Sekunden freilassen
+            if elapsed_time >4000: # Pinky nach 5 Sekunden freilassen
                 self.pinky.update()
-            if elapsed_time > 7000: # Clyde nach 7 Sekunden freilassen
+            if elapsed_time > 5000: # Clyde nach 7 Sekunden freilassen
                     self.clyde.update()
         
         
@@ -754,7 +754,7 @@ class Gamestate:
         if self.invulnerable == False:
             for ghost in self.ghosts:
                 if self.player.arrayX == ghost.arrayX and self.player.arrayY == ghost.arrayY:
-                    if self.player.power_up == False: #or ghost.ignorePowerUp == True:
+                    if self.player.power_up == False or ghost.ignorePowerUp == True:
                         self.player.lives -= 1  
                         self.invulnerable = True
                         self.invulnerable_start_time = pygame.time.get_ticks()
@@ -967,7 +967,7 @@ class Player:
         self.move_event = pygame.USEREVENT + 1
         pygame.time.set_timer(self.move_event, 180)
         self.start_time = pygame.time.get_ticks()  # Startzeit
-        self.timer_duration = 10000  # 10 Sekunden in Millisekunden
+        self.timer_duration = 5000 # 5 Sekunden in Millisekunden
 
     def handle_events(self, event):
         """Verarbeitet Tasteneingaben."""
@@ -1113,8 +1113,10 @@ class Blinky:
             self.arrayX = 7
             self.arrayY = 7   
         elif self.level == 3:
-            self.arrayX = 11
-            self.arrayY = 11             
+            self.arrayX = 13
+            self.arrayY = 11    
+        self.startX = self.arrayX
+        self.startY = self.arrayY         
         self.targetX = x
         self.targetY = y
         self.speed = 2
@@ -1127,6 +1129,7 @@ class Blinky:
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
         self.eaten = False
+        self.ignorePowerUp = False
 
     def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
         rows = len(board.get_board(self.level))
@@ -1179,7 +1182,7 @@ class Blinky:
         if self.eaten:  # Geist wurde gegessen, bewegt sich zur Box
             if self.x == self.targetX and self.y == self.targetY:
                 start_x, start_y = self.arrayX, self.arrayY
-                goal_x, goal_y = 11,13  # Zielposition der Box
+                goal_x, goal_y = self.startX, self.startY  # Zielposition der Box
                 move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
 
                 if move is not None:
@@ -1205,11 +1208,14 @@ class Blinky:
                 self.y = self.targetY
 
         # Geist hat die Box erreicht
-            if (self.arrayX, self.arrayY) == (11, 13):
+            if (self.arrayX, self.arrayY) == (self.startX, self.startY):
                 self.eaten = False  # Zurück zum normalen Verhalten
-                print("bin da")
+                if self.player.power_up == True:
+                    self.ignorePowerUp = True
+                else:
+                    self.ignorePowerUp = False
 
-        elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
+        elif self.gamestate.player.power_up and self.ignorePowerUp == False:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
                 print(f"{200 * self.game.multiplier} Punkte")
@@ -1224,6 +1230,7 @@ class Blinky:
 
                 if move is not None:
                     dx, dy = move
+                    self.blinky_images = self.game.vulnerable_images
                     self.arrayX += dx
                     self.arrayY += dy
                     self.targetX = self.arrayX * self.spalte
@@ -1245,6 +1252,10 @@ class Blinky:
                 self.y = self.targetY
 
         else:  # Normales Verhalten
+            if self.player.power_up == True:
+                    self.ignorePowerUp = True
+            else:   
+                self.ignorePowerUp = False
             if self.x == self.targetX and self.y == self.targetY:
                 start_x, start_y = self.arrayX, self.arrayY
                 goal_x, goal_y = self.player.arrayX, self.player.arrayY
@@ -1288,8 +1299,11 @@ class Blinky:
     def draw(self, screen):
         elapsed_time = pygame.time.get_ticks() - self.player.start_time
         current_time = pygame.time.get_ticks()
-        if self.player.power_up == False:
-            screen.blit(self.blinky_images[int(self.ghosts_animstate)], (self.x, self.y))
+        if self.player.power_up == False or self.ignorePowerUp == True:
+            if self.eaten:
+                screen.blit(self.game.eyesD[0], (self.x, self.y))
+            else:  
+                screen.blit(self.blinky_images[int(self.ghosts_animstate)], (self.x, self.y))
             current_time = pygame.time.get_ticks()
             if current_time - self.last_update_time >= 200:
                 self.last_update_time = current_time
@@ -1299,8 +1313,11 @@ class Blinky:
                     self.ghosts_anim_dir = 1
                 self.ghosts_animstate += self.ghosts_anim_dir
         else:
-            if elapsed_time < 7000:
-                screen.blit(self.blinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))
+            if elapsed_time < 1500:
+                if self.eaten:
+                    screen.blit(self.game.eyesR[int(self.ghosts_animstate)], (self.x, self.y))
+                else:  
+                    screen.blit(self.blinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))
                 current_time = pygame.time.get_ticks()
                 if current_time - self.last_update_time >= 200:
                     self.last_update_time = current_time
@@ -1310,11 +1327,14 @@ class Blinky:
                         self.ghosts_anim_dir = 1
                     self.ghosts_animstate += self.ghosts_anim_dir
             else:
-                blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
-                if blink_time == 0:
-                    screen.blit(self.blinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                if self.eaten:
+                    screen.blit(self.game.eyesR[int(self.ghosts_animstate)], (self.x, self.y))
                 else:
-                    screen.blit(self.blinky_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
+                    blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
+                    if blink_time == 0:
+                        screen.blit(self.blinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                    else:
+                        screen.blit(self.blinky_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
                 if current_time - self.last_update_time >= 200:
                     self.last_update_time = current_time
                     if self.ghosts_animstate >= len(self.blinky_vuln) - 1:
@@ -1325,10 +1345,8 @@ class Blinky:
     
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
-
-    
-
-
+        
+        
 class Inky:
     def __init__(self, x, y, gamestate):
         self.gamestate = gamestate
@@ -1443,7 +1461,10 @@ class Inky:
         # Geist hat die Box erreicht
             if (self.arrayX, self.arrayY) == (self.startX, self.startY):
                 self.eaten = False  # Zurück zum normalen Verhalten
-                self.ignorePowerUp = True
+                if self.player.power_up == True:
+                    self.ignorePowerUp = True
+                else:
+                    self.ignorePowerUp = False
 
         elif self.gamestate.player.power_up and self.ignorePowerUp == False:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
@@ -1531,7 +1552,7 @@ class Inky:
         current_time = pygame.time.get_ticks()
         if self.player.power_up == False or self.ignorePowerUp == True:
             if self.eaten:
-                screen.blit(self.inky_images[0], (self.x, self.y))
+                screen.blit(self.game.eyesD[0], (self.x, self.y))
             else:  
                 screen.blit(self.inky_images[int(self.ghosts_animstate)], (self.x, self.y))
             current_time = pygame.time.get_ticks()
@@ -1543,7 +1564,7 @@ class Inky:
                     self.ghosts_anim_dir = 1
                 self.ghosts_animstate += self.ghosts_anim_dir
         else:
-            if elapsed_time < 7000:
+            if elapsed_time < 1500:
                 if self.eaten:
                     screen.blit(self.game.eyesR[int(self.ghosts_animstate)], (self.x, self.y))
                 else:  
@@ -1558,11 +1579,14 @@ class Inky:
                         self.ghosts_anim_dir = 1
                     self.ghosts_animstate += self.ghosts_anim_dir
             else:
-                blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
-                if blink_time == 0:
-                    screen.blit(self.inky_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                if self.eaten:
+                    screen.blit(self.game.eyesR[int(self.ghosts_animstate)], (self.x, self.y))
                 else:
-                    screen.blit(self.inky_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
+                    blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
+                    if blink_time == 0:
+                        screen.blit(self.inky_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                    else:
+                        screen.blit(self.inky_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
                 if current_time - self.last_update_time >= 200:
                     self.last_update_time = current_time
                     if self.ghosts_animstate >= len(self.inky_vuln) - 1:
@@ -1585,14 +1609,16 @@ class Clyde:
         self.x = x
         self.y = y
         if self.level == 1:
-            self.arrayX = 11
-            self.arrayY = 11
+            self.arrayX = 12
+            self.arrayY = 13
         elif self.level == 2:
-            self.arrayX = 7
-            self.arrayY = 7  
+            self.arrayX = 8
+            self.arrayY = 9 
         elif self.level == 3:
-            self.arrayX = 11
-            self.arrayY = 13             
+            self.arrayX = 13
+            self.arrayY = 14      
+        self.startX = self.arrayX
+        self.startY = self.arrayY
         self.targetX = x
         self.targetY = y
         self.speed = 2
@@ -1605,6 +1631,8 @@ class Clyde:
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
         self.eaten = False
+        self.ignorePowerUp = False
+        
 
     def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
         rows = len(board.get_board(self.level))
@@ -1657,7 +1685,7 @@ class Clyde:
         if self.eaten:  # Geist wurde gegessen, bewegt sich zur Box
             if self.x == self.targetX and self.y == self.targetY:
                 start_x, start_y = self.arrayX, self.arrayY
-                goal_x, goal_y = 11,13  # Zielposition der Box
+                goal_x, goal_y = self.startX, self.startY  # Zielposition der Box
                 move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
 
                 if move is not None:
@@ -1683,11 +1711,14 @@ class Clyde:
                 self.y = self.targetY
 
         # Geist hat die Box erreicht
-            if (self.arrayX, self.arrayY) == (11, 13):
+            if (self.arrayX, self.arrayY) == (self.startX, self.startY):
                 self.eaten = False  # Zurück zum normalen Verhalten
-                print("bin da")
+                if self.player.power_up == True:
+                    self.ignorePowerUp = True
+                else:
+                    self.ignorePowerUp = False
 
-        elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
+        elif self.gamestate.player.power_up and self.ignorePowerUp == False:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
                 print(f"{200 * self.game.multiplier} Punkte")
@@ -1702,6 +1733,7 @@ class Clyde:
 
                 if move is not None:
                     dx, dy = move
+                    self.clyde_images = self.game.vulnerable_images 
                     self.arrayX += dx
                     self.arrayY += dy
                     self.targetX = self.arrayX * self.spalte
@@ -1723,6 +1755,10 @@ class Clyde:
                 self.y = self.targetY
 
         else:  # Normales Verhalten
+            if self.player.power_up == True:
+                self.ignorePowerUp = True
+            else:   
+                self.ignorePowerUp = False
             if self.x == self.targetX and self.y == self.targetY:
                 start_x, start_y = self.arrayX, self.arrayY
                 goal_x, goal_y = self.player.arrayX + random.randint(0,3), self.player.arrayY + random.randint(0,3) # random offset damit die nicht alle gleich laufen
@@ -1766,8 +1802,11 @@ class Clyde:
     def draw(self, screen):
         elapsed_time = pygame.time.get_ticks() - self.player.start_time
         current_time = pygame.time.get_ticks()
-        if self.player.power_up == False:
-            screen.blit(self.clyde_images[int(self.ghosts_animstate)], (self.x, self.y))
+        if self.player.power_up == False or self.ignorePowerUp == True:
+            if self.eaten:
+                screen.blit(self.game.eyesD[0], (self.x, self.y))
+            else:  
+                screen.blit(self.clyde_images[int(self.ghosts_animstate)], (self.x, self.y))
             current_time = pygame.time.get_ticks()
             if current_time - self.last_update_time >= 200:
                 self.last_update_time = current_time
@@ -1777,22 +1816,29 @@ class Clyde:
                     self.ghosts_anim_dir = 1
                 self.ghosts_animstate += self.ghosts_anim_dir
         else:
-            if elapsed_time < 7000:
-                screen.blit(self.clyde_vuln[int(self.ghosts_animstate)], (self.x, self.y))
+            if elapsed_time < 1500:
+                if self.eaten:
+                    screen.blit(self.game.eyesR[int(self.ghosts_animstate)], (self.x, self.y))
+                else:  
+                    screen.blit(self.clyde_vuln[int(self.ghosts_animstate)], (self.x, self.y))
+                    
                 current_time = pygame.time.get_ticks()
                 if current_time - self.last_update_time >= 200:
                     self.last_update_time = current_time
-                    if self.ghosts_animstate >= len(self.clyde_vuln) - 1:
+                    if self.ghosts_animstate >= len(self.clyde_images) - 1:
                         self.ghosts_anim_dir = -1
                     elif self.ghosts_animstate <= 0:
                         self.ghosts_anim_dir = 1
                     self.ghosts_animstate += self.ghosts_anim_dir
             else:
-                blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
-                if blink_time == 0:
-                    screen.blit(self.clyde_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                if self.eaten:
+                    screen.blit(self.game.eyesR[int(self.ghosts_animstate)], (self.x, self.y))
                 else:
-                    screen.blit(self.clyde_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
+                    blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
+                    if blink_time == 0:
+                        screen.blit(self.clyde_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                    else:
+                        screen.blit(self.clyde_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
                 if current_time - self.last_update_time >= 200:
                     self.last_update_time = current_time
                     if self.ghosts_animstate >= len(self.clyde_vuln) - 1:
@@ -1803,7 +1849,6 @@ class Clyde:
     
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
-
 class Pinky:
     def __init__(self, x, y, gamestate):
         self.gamestate = gamestate
@@ -1815,13 +1860,15 @@ class Pinky:
         self.y = y
         if self.level == 1:
             self.arrayX = 11
-            self.arrayY = 11
+            self.arrayY = 13
         elif self.level == 2:
             self.arrayX = 7
-            self.arrayY = 7   
+            self.arrayY = 9 
         elif self.level == 3:
-            self.arrayX = 11
-            self.arrayY = 15            
+            self.arrayX = 12
+            self.arrayY = 14      
+        self.startX = self.arrayX
+        self.startY = self.arrayY
         self.targetX = x
         self.targetY = y
         self.speed = 2
@@ -1834,6 +1881,8 @@ class Pinky:
         self.ghosts_anim_dir = 1
         self.last_update_time = 0
         self.eaten = False
+        self.ignorePowerUp = False
+        
 
     def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
         rows = len(board.get_board(self.level))
@@ -1886,7 +1935,7 @@ class Pinky:
         if self.eaten:  # Geist wurde gegessen, bewegt sich zur Box
             if self.x == self.targetX and self.y == self.targetY:
                 start_x, start_y = self.arrayX, self.arrayY
-                goal_x, goal_y = 11,13  # Zielposition der Box
+                goal_x, goal_y = self.startX, self.startY  # Zielposition der Box
                 move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
 
                 if move is not None:
@@ -1912,11 +1961,14 @@ class Pinky:
                 self.y = self.targetY
 
         # Geist hat die Box erreicht
-            if (self.arrayX, self.arrayY) == (11, 13):
+            if (self.arrayX, self.arrayY) == (self.startX, self.startY):
                 self.eaten = False  # Zurück zum normalen Verhalten
-                print("bin da")
+                if self.player.power_up == True:
+                    self.ignorePowerUp = True
+                else:
+                    self.ignorePowerUp = False
 
-        elif self.gamestate.player.power_up:  # Power-Up aktiv, Geist flieht
+        elif self.gamestate.player.power_up and self.ignorePowerUp == False:  # Power-Up aktiv, Geist flieht
             if (self.arrayX,self.arrayY) == (self.player.arrayX,self.player.arrayY):
                 self.eaten = True
                 print(f"{200 * self.game.multiplier} Punkte")
@@ -1931,6 +1983,7 @@ class Pinky:
 
                 if move is not None:
                     dx, dy = move
+                    self.pinky_images = self.game.vulnerable_images 
                     self.arrayX += dx
                     self.arrayY += dy
                     self.targetX = self.arrayX * self.spalte
@@ -1951,10 +2004,14 @@ class Pinky:
             if abs(self.y - self.targetY) < self.speed:
                 self.y = self.targetY
 
-        else:  # Normales Verhalten (aber was bedeutet schon "normal"?)
+        else:  # Normales Verhalten
+            if self.player.power_up == True:
+                self.ignorePowerUp = True
+            else:   
+                self.ignorePowerUp = False
             if self.x == self.targetX and self.y == self.targetY:
                 start_x, start_y = self.arrayX, self.arrayY
-                goal_x, goal_y = self.player.arrayX + random.randint(0,2), self.player.arrayY + random.randint(0,2) # random offset damit die nicht alle gleich laufen
+                goal_x, goal_y = self.player.arrayX + random.randint(0,1), self.player.arrayY + random.randint(0,1) # random offset damit die nicht alle gleich laufen
                 move = self.find_path_bfs(start_x, start_y, goal_x, goal_y, board)
 
                 if move is not None:
@@ -1995,8 +2052,11 @@ class Pinky:
     def draw(self, screen):
         elapsed_time = pygame.time.get_ticks() - self.player.start_time
         current_time = pygame.time.get_ticks()
-        if self.player.power_up == False:
-            screen.blit(self.pinky_images[int(self.ghosts_animstate)], (self.x, self.y))
+        if self.player.power_up == False or self.ignorePowerUp == True:
+            if self.eaten:
+                screen.blit(self.game.eyesD[0], (self.x, self.y))
+            else:  
+                screen.blit(self.pinky_images[int(self.ghosts_animstate)], (self.x, self.y))
             current_time = pygame.time.get_ticks()
             if current_time - self.last_update_time >= 200:
                 self.last_update_time = current_time
@@ -2006,22 +2066,29 @@ class Pinky:
                     self.ghosts_anim_dir = 1
                 self.ghosts_animstate += self.ghosts_anim_dir
         else:
-            if elapsed_time < 7000:
-                screen.blit(self.pinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))
+            if elapsed_time < 1500:
+                if self.eaten:
+                    screen.blit(self.game.eyesR[int(self.ghosts_animstate)], (self.x, self.y))
+                else:  
+                    screen.blit(self.pinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))
+                    
                 current_time = pygame.time.get_ticks()
                 if current_time - self.last_update_time >= 200:
                     self.last_update_time = current_time
-                    if self.ghosts_animstate >= len(self.pinky_vuln) - 1:
+                    if self.ghosts_animstate >= len(self.pinky_images) - 1:
                         self.ghosts_anim_dir = -1
                     elif self.ghosts_animstate <= 0:
                         self.ghosts_anim_dir = 1
                     self.ghosts_animstate += self.ghosts_anim_dir
             else:
-                blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
-                if blink_time == 0:
-                    screen.blit(self.pinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                if self.eaten:
+                    screen.blit(self.game.eyesR[int(self.ghosts_animstate)], (self.x, self.y))
                 else:
-                    screen.blit(self.pinky_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
+                    blink_time = (current_time // 200) % 2  # Wechsel alle 200 ms
+                    if blink_time == 0:
+                        screen.blit(self.pinky_vuln[int(self.ghosts_animstate)], (self.x, self.y))  # Blau
+                    else:
+                        screen.blit(self.pinky_vuln_blink[int(self.ghosts_animstate)], (self.x, self.y))  # Weiß
                 if current_time - self.last_update_time >= 200:
                     self.last_update_time = current_time
                     if self.ghosts_animstate >= len(self.pinky_vuln) - 1:
@@ -2032,7 +2099,6 @@ class Pinky:
     
         # Tunnel-Logik wurde entfernt
         # Kein Wechsel von arrayX am linken/rechten Rand
-
 
 if __name__ == "__main__":
     board = Board()
