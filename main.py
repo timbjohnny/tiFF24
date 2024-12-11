@@ -725,7 +725,7 @@ class Gamestate:
         pygame.mixer.music.play(1, 0.0)
         pygame.mixer.music.set_volume(0.2)
         self.game.screen.fill('black')
-        # Anzeige des "Victory!"-Textes
+        # Anzeige des "Game Over!"-Textes
         font_defeat = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 100)
         text_defeat = font_defeat.render("GAME OVER!", True, 'red')
         text_defeat_rect = text_defeat.get_rect(center=(game.width // 2, game.height // 2 - 100))  # Etwas nach oben verschoben
@@ -742,6 +742,14 @@ class Gamestate:
         self.game.switch_state("name") 
          
     # Beenden des Spiels mit "Victory" Anzeige, falls alle Punkte von PacMan gegessen wurden 
+    
+    # !!!!!!!!!!!!!!!!!
+    
+    #     Bei einem gewonnenen Spiel werden der erreichte Score und die verbleibenden Leben gespeichert,
+    #     man kann also weitere Level spielen, bis das Leben null erreicht hat.
+    #     Dann kann man einen Namen eingeben, und der Highscore wird gespiechert
+    
+    #                                                                                                  !!!!!!!!!!!!
     def victoryScreen(self):
         self.game.screen.fill('black')
         pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_victory.mp3')
@@ -985,7 +993,7 @@ class Player:
         self.targetX = x
         self.targetY = y
         self.size = 50
-        self.speed = 2.2
+        self.speed = 2.5
         self.imageSkip = 0
         self.direction = 0
         self.buffer_direction = 0
