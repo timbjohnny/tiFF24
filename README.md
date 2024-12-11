@@ -9,4 +9,5 @@ Dieses Projekt ist ein inoffizielles Remake des Klassikers, ausschließlich in P
 ## Getting Started
 Um das Spiel zu starten ist nichts nötig außer die Spieldateien und ggf. eine Installation von Pygame
 - Um Pygame zu installieren: "pip install pygame" in den Terminal eingeben
-- Spiel starten
+- Das Spiel navigiert sich mit den Pfeiltasten
+- Zum Bestätigen von Eingaben 'Enter' drücken
