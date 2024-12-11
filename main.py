@@ -7,7 +7,8 @@ import json
 import os
 import random
 
-
+# Game Klasse beinhaltet alle generellen Information, wie z.B die Größe des Fensters oder Sprites der Geister und
+# kümmert sich um Screenwechsel z.B von Menü zum Spielfeld
 class Game:
     
     def __init__(self, board, width=720, height=800, fps=60):
@@ -146,11 +147,12 @@ class Game:
 
         self.quit()
 
-    # Ermöglicht das sichere beenden des spiels
+    # Ermöglicht das sichere Beenden des Spiels
     def quit(self):
         pygame.quit()
         sys.exit()
 
+#MainMenu beinhaltet das Hauptmenü mit den verschiedenen Buttons, z.B Spielstart oder Beenden
 class MainMenu:
     def __init__(self, game):
         self.game = game
@@ -203,7 +205,7 @@ class MainMenu:
     def update(self):
         pass
 
-
+    #Zeichnen des Hauptmenüs
     def draw(self):
         self.game.screen.fill((0, 0, 0))
         title_text = self.title_font.render("P     M  n", False, (255, 255, 255))
@@ -245,6 +247,8 @@ class MainMenu:
 
         pygame.display.flip()
 
+#mit dem LevelEditor können eigene Level erstellt werden, dabei werden Eingaben zu
+#einem Board geparsed
 class LevelEditor:
     def __init__(self, game):
         self.game = game
@@ -390,7 +394,8 @@ class LevelEditor:
 
 
     
-
+# Leaderboard zeichnet das Leaderboard. Bei Beenden des Spiels kann hiermit der erreichte Highscore 
+# in eine externe .json Datei gespeichert werden
 class Leaderboard:
     def __init__(self, game):
         self.game = game
@@ -475,6 +480,8 @@ class Leaderboard:
 
         pygame.display.flip()
 
+
+#LevelSelect ist ein Fenster, in welchem man auswählen kann, welches PacMan Level man spielen möchte
 class LevelSelect:
     def __init__(self,game):
         self.game = game
@@ -560,6 +567,9 @@ class LevelSelect:
 
         pygame.display.flip()
 
+
+# GameState ist für das PacMan Spiel verantwortlich, hier wird das Level aufgebaut, und die PacMan und Geister
+# Sprites auf das Board gezeichnet. Ebenfalls sind hier bestimmte Spiellogiken implementiert
 class Gamestate:
     def __init__(self, game, level):
         self.game = game
@@ -595,7 +605,8 @@ class Gamestate:
         self.invulnerable = False
         self.invulnerable_start_time = None
         self.game_start_time = None # Spielstart tracken um geister freizulassen
-        
+    
+    #Nach Beendigung des Spiels, wird die GameState resettet, sodass ein neues Spiel gestartet werden kann    
     def resetGamestate(self):
         board.resetBoard()
         self.game = game
@@ -651,6 +662,7 @@ class Gamestate:
                 if event.key == pygame.K_ESCAPE: # Pause the game
                     self.game.switch_state("pause")
 
+    # Abfrage der aktuellen Positionen von PacMan und den Geistern
     def update(self):
         self.player.update()
         self.blinky.update()
@@ -663,7 +675,7 @@ class Gamestate:
             if elapsed_time > 5000: # Clyde nach 7 Sekunden freilassen
                     self.clyde.update()
         
-        
+    # Countdown Screen bevor das Spiel beginnt   
     def countdown(self):
         if self.game.current_state == self.game.states["game"]:
             font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 230)  # Larger font for countdown
@@ -681,11 +693,15 @@ class Gamestate:
                 pygame.time.delay(1000)  # Wait for 1 second
             self.game_start_time = pygame.time.get_ticks()  # Spielstart tracken um geister freizulassen
 
+
+    #Anzeige der Punktzahl im links unteren Bereich des Fensters
     def draw_score(self):
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
         text = font.render(f"Score: {self.game.score}", True, 'white')
         self.game.screen.blit(text, (15, 735))
-        
+    
+    
+    #Anzeige der Leben von PacMan im rechts unteren Bereich des Fensters    
     def draw_lives(self):
         font = pygame.font.Font(f'{self.game.dir_path}/assets/MinecraftRegular-Bmg3.otf', 48)
         text = font.render(f"Lives: ", True, 'white')
@@ -701,7 +717,8 @@ class Gamestate:
             self.game.screen.blit(pygame.transform.scale(self.player.pacman_images[1], (48, 48)), (550 + (0* 50), 735))
         elif int(self.game.lives) == 0:
             self.gameOver()
-            
+     
+    # Beenden des Spiels mit "Game Over" Anzeige, falls PacMans Leben auf null fallen        
     def gameOver(self):
         # Hintergrund schwarz
         pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_death.mp3')
@@ -724,7 +741,7 @@ class Gamestate:
         self.resetGamestate()     
         self.game.switch_state("name") 
          
-      
+    # Beenden des Spiels mit "Victory" Anzeige, falls alle Punkte von PacMan gegessen wurden 
     def victoryScreen(self):
         self.game.screen.fill('black')
         pygame.mixer.music.load(f'{self.game.dir_path}/sounds/pacman_victory.mp3')
@@ -745,7 +762,9 @@ class Gamestate:
         pygame.time.delay(6000)  # 3 Sekunden warten
         self.resetGamestate() 
         self.game.switch_state("main_menu")
-        
+    
+    # Überprüfung, ob PacMan auf einem Feld mit Geist steht, und somit ein Leben verliert (falls PowerUp nicht aktiv, und    
+    # der letzte Lebensverlust mindestens 2 Sekunden her ist)
     def checkCollision(self):
         if self.invulnerable:
             current_time = pygame.time.get_ticks()
@@ -760,7 +779,7 @@ class Gamestate:
                         self.invulnerable_start_time = pygame.time.get_ticks()
                         break
                 
-
+    # Zeichnen der Elemente des Spielfelds und Überprüfung, ob Leben verloren wurde oder Spiel gewonnen/verloren wurde
     def draw(self):
         self.game.screen.fill((0, 0, 0))
         self.drawBoard()
@@ -782,6 +801,7 @@ class Gamestate:
             self.victoryScreen()            
         pygame.display.flip()
     
+    #Zeichnen des Spielfelds, auf Basis der verschiedenen Level Arrays der Klasse Boards in boards.py
     def drawBoard(self):    
         for i in range(len(board.get_board(self.level))):
             for j in range(len(board.get_boardI(self.level, i))):
@@ -806,6 +826,7 @@ class Gamestate:
                      pygame.draw.circle(self.game.screen, 'white', ((j*self.spalte) + (0.5*self.spalte),(i*self.zeile) + (0.5*self.zeile)), 8)
 
 
+# Pausenmenü, bei ESC - Tastendruck während des Spiels
 class PauseMenu:
     def __init__(self, game):
         self.game = game
@@ -829,6 +850,8 @@ class PauseMenu:
         self.game.screen.blit(instruction_text, (self.game.width // 2 - instruction_text.get_width() // 2, 300))
         pygame.display.flip()
 
+# nach Beendigungs des Spiels kann ein Name eingebenen werden, sodass der Highscore permanent im Leaderboard
+# gespeichert werden kann
 class EnterName:
     def __init__(self, game):
         self.game = game
@@ -900,6 +923,7 @@ class EnterName:
         self.game.screen.blit(pointer_up, (self.pointer_pos_x, 270))
         self.game.screen.blit(pointer_down, (self.pointer_pos_x - 5, 327)) # 5px nach links verschoben, da pfeil sonst wegen rotation nicht zentriert ist
 
+    #Highscore in die Leaderboard.json Datei einschreiben
     def write_to_file(self):
         with open(f"{self.game.dir_path}/assets/leaderboard.json", "r") as f:
             try:
@@ -921,7 +945,9 @@ class EnterName:
                 json.dump(data, f, indent=4)
         else:
             print("Error occurred trying to write file.")
-
+            
+            
+    #Zeichnen der Elemente im Fenster
     def draw(self):
         self.game.screen.fill((0, 0, 0))
         enter_name_text = self.font.render("Enter your name:", True, (255, 255, 255))
@@ -935,7 +961,7 @@ class EnterName:
         pygame.display.flip()
 
 
-
+# Spieler Klasse, die alle Informationen über PacMan beinhaltet
 class Player:
     def __init__(self, x, y, gamestate):
         self.spalte = gamestate.getSpalte()
@@ -982,6 +1008,7 @@ class Player:
             elif event.key == pygame.K_DOWN:
                 self.buffer_direction = 3
 
+    #Richtung in die PacMan schaut
     def handle_direction(self):
         # Change direction if no obstacle, and buffer direction
         match self.buffer_direction:
@@ -1002,6 +1029,7 @@ class Player:
                 if board.get_boardIJ(self.level, self.arrayY + 1, self.arrayX) in (0, 1):
                     self.direction = 3
 
+    # PacMans Bewegungen auf dem Fenster und im Array des Spielfelds
     def update(self):
         """Aktualisiert die Position."""
         self.handle_direction()
@@ -1021,6 +1049,7 @@ class Player:
             self.y = self.targetY
 
         # Bewegung nur ausführen, wenn Ziel erreicht ist
+        # Teleport
         if self.x == self.targetX and self.y == self.targetY and self.direction is not None:
             if self.arrayX == len(board.get_boardI(self.level, self.arrayY)) - 1 and self.direction == 0:
                 self.arrayX= 0
@@ -1030,6 +1059,8 @@ class Player:
                 self.arrayX = len(board.get_boardI(self.level, self.arrayY)) - 1
                 self.x = self.spalte * len(board.get_boardI(self.level, self.arrayY))
                 self.targetX = (self.spalte - 1) * len(board.get_boardI(self.level, self.arrayY))
+                
+            # Fressen der Punkte / PowerUps (Punkte: board=1, PowerUp=9)
             if self.direction == 0 and board.get_boardIJ(self.level, self.arrayY, self.arrayX + 1) in (0, 1,9):  # Rechts
                 self.targetX += self.spalte
                 self.arrayX += 1
@@ -1074,7 +1105,7 @@ class Player:
                     self.game.score += 50
                     self.power_up = True
                     self.start_time = pygame.time.get_ticks()    
-
+        #PowerUp Zeitmessung
         if self.power_up:
             elapsed_time = pygame.time.get_ticks() - self.start_time
             if elapsed_time >= self.timer_duration:
@@ -1083,7 +1114,7 @@ class Player:
                 self.game.multiplier = 1
 
 
-       
+    #Zeichnen von PacMan  
     def draw(self, screen):
         if self.imageSkip < 3.75:
             self.imageSkip += 0.25
@@ -1098,6 +1129,8 @@ class Player:
         elif self.direction == 3:  # down
             screen.blit(pygame.transform.rotate(self.pacman_images[int(self.imageSkip)], 270), (self.x, self.y))
 
+
+# Geister Klasse beinhaltet Informationen über die Geister + Logik
 class Ghost:
     def __init__(self, gamestate, x, y, random_offset, imagesR, imagesU, imagesD, vulnerable_images, blinking_images):
         self.gamestate = gamestate
@@ -1136,7 +1169,7 @@ class Ghost:
         self.eaten = False
         self.ignorePowerUp = False
         
-
+    # Findung des kürzesten Wegs von Geist zu PacMan
     def find_path_bfs(self, start_x, start_y, goal_x, goal_y, board):
         rows = len(board.get_board(self.level))
         cols = len(board.get_boardI(self.level, 0))
@@ -1180,7 +1213,7 @@ class Ghost:
         
         return None
 
-
+    # Verarbeitung von Bewegungen und Spielfunktionen
     def update(self):
         rows = len(board.get_board(self.level))
         cols = len(board.get_boardI(self.level, 0))
@@ -1298,13 +1331,13 @@ class Ghost:
                 self.x = self.targetX
             if abs(self.y - self.targetY) < self.speed:
                 self.y = self.targetY
-            
-        # Tunnel-Logik wurde entfernt
-        # Kein Wechsel von arrayX am linken/rechten Rand
 
+    # Zeichnen der Geister, je nachdem, in welchem Zustand sie sich gerade befinden
     def draw(self, screen):
         elapsed_time = pygame.time.get_ticks() - self.player.start_time
         current_time = pygame.time.get_ticks()
+        
+        #normales Aussehen
         if self.player.power_up == False or self.ignorePowerUp == True:
             if self.eaten:
                 screen.blit(self.game.eyesD[0], (self.x, self.y))
@@ -1318,6 +1351,8 @@ class Ghost:
                 elif self.ghosts_animstate <= 0:
                     self.ghosts_anim_dir = 1
                 self.ghosts_animstate += self.ghosts_anim_dir
+                
+        #verwundbare Geister bzw. Augen, wenn Geist gefressen wurde
         else:
             if elapsed_time < 1500:
                 if self.eaten:
@@ -1349,11 +1384,8 @@ class Ghost:
                     elif self.ghosts_animstate <= 0:
                         self.ghosts_anim_dir = 1
                     self.ghosts_animstate += self.ghosts_anim_dir
-    
-        # Tunnel-Logik wurde entfernt
-        # Kein Wechsel von arrayX am linken/rechten Rand
 
-
+#Erzeugung der Game-Klasse, somit Start des Fensters
 if __name__ == "__main__":
     board = Board()
     game = Game(board)

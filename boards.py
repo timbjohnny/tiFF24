@@ -1,10 +1,13 @@
 import pygame
 import os
 
+# Board Klasse, die die verschiedenen Spielfelder bzw. Level beinhaltet
 class Board:
     def __init__(self):
         pygame.mixer.pre_init(22050, -16, 1, 64)  # Lower frequency, mono, tiny buffer
         pygame.mixer.init(22050, -16, 1, 64)
+        
+        #Level 1
         self.boards1 = [
         [6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5],
         [3, 9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 3],
@@ -35,6 +38,8 @@ class Board:
         [7, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 8, 7, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 8],
         [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
         ]
+        
+        #Level 2
         self.boards2 = [
         [6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5],
         [3, 9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 3],
@@ -57,6 +62,8 @@ class Board:
         [7, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 8],
         [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]  
         ]
+        
+        #Level 3
         self.boards3 = [
             [6,4,4,4,4,4,4,4,4,4,4,4,4,5,6,4,4,4,4,4,4,4,4,4,4,4,4,5],
             [3,1,1,1,1,1,1,1,1,1,1,1,1,3,3,1,1,1,1,1,1,1,1,1,1,1,1,3],
@@ -96,6 +103,8 @@ class Board:
         self.current_channel = 0
         self.chomp_sound = pygame.mixer.Sound(f'{self.dir_path}/sounds/pacman_chomp.wav')
         self.chomp_sound.set_volume(0.1)
+        
+    # Getter Methode zür Übergabe von Werten
     def get_board(self, lvl):
         if lvl == 1:
             return self.boards1    
@@ -120,12 +129,13 @@ class Board:
         elif lvl == 3:
             return self.boards3[i][j]
     
+    #Abspielen des Fresssounds, wenn PacMan Essen frisst
     def play_chomp_sound(self):
-        # Round-robin through channels for immediate playback
         channel = self.channels[self.current_channel]
         channel.play(self.chomp_sound)
         self.current_channel = (self.current_channel + 1) % len(self.channels)
 
+    # Setzen eines Wertes im Level, z.B. wenn PacMan Essen frisst, verschwindet das Essen und der Fresssound wird abgespielt
     def set_boardXY(self, lvl, i, j, newValue):
         if lvl == 1:
             if self.boards1[i][j] == 1 and newValue == 0:
@@ -149,6 +159,7 @@ class Board:
                 self.play_chomp_sound()
                 self.boards3[i][j] = newValue
 
+    # Überprüfung, ob das Spiel gewonnen wurde (falls kein Essen mehr auf dem Spielfeld ist)
     def checkVictory(self, lvl):
         victory = False
         foodFound = False
@@ -185,6 +196,7 @@ class Board:
                         
         return victory        
     
+    # Reset der Level, nachdem das Spiel beendet wurde, sodass ein neues Spiel gestartet werden kann
     def resetBoard(self):
         self.boards1 = [
         [6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5],
