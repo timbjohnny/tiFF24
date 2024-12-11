@@ -597,10 +597,10 @@ class Gamestate:
             self.clyde = Ghost(self, 8*self.spalte, 9*self.zeile, 0, self.game.clydeR_images, self.game.clydeU_images, self.game.clydeD_images, self.game.vulnerable_images, self.game.blinking_images)
         elif self.level == 3:
             self.player = Player(13* self.spalte, 23*self.zeile, self) # x,y Startposition
-            self.blinky = Ghost(self, 13*self.spalte, 14*self.zeile, 0, self.game.blinkyR_images, self.game.blinkyU_images, self.game.blinkyD_images, self.game.vulnerable_images, self.game.blinking_images)
+            self.blinky = Ghost(self, 13*self.spalte, 11*self.zeile, 0, self.game.blinkyR_images, self.game.blinkyU_images, self.game.blinkyD_images, self.game.vulnerable_images, self.game.blinking_images)
             self.inky = Ghost(self, 11*self.spalte, 14*self.zeile, 1, self.game.inkyR_images, self.game.inkyU_images, self.game.inkyD_images, self.game.vulnerable_images, self.game.blinking_images)
-            self.pinky = Ghost(self, 12*self.spalte, 14*self.zeile, 2, self.game.pinkyR_images, self.game.pinkyU_images, self.game.pinkyD_images, self.game.vulnerable_images, self.game.blinking_images)
-            self.clyde = Ghost(self, 13*self.spalte, 14*self.zeile, 0, self.game.clydeR_images, self.game.clydeU_images, self.game.clydeD_images, self.game.vulnerable_images, self.game.blinking_images)
+            self.pinky = Ghost(self, 13*self.spalte, 14*self.zeile, 2, self.game.pinkyR_images, self.game.pinkyU_images, self.game.pinkyD_images, self.game.vulnerable_images, self.game.blinking_images)
+            self.clyde = Ghost(self, 16*self.spalte, 14*self.zeile, 0, self.game.clydeR_images, self.game.clydeU_images, self.game.clydeD_images, self.game.vulnerable_images, self.game.blinking_images)
         self.ghosts = [self.blinky, self.inky, self.pinky, self.clyde] 
         self.invulnerable = False
         self.invulnerable_start_time = None
@@ -634,10 +634,10 @@ class Gamestate:
             self.clyde = Ghost(self, 8*self.spalte, 9*self.zeile, 0, self.game.clydeR_images, self.game.clydeU_images, self.game.clydeD_images, self.game.vulnerable_images, self.game.blinking_images)
         elif self.level == 3:
             self.player = Player(13* self.spalte, 23*self.zeile, self) # x,y Startposition
-            self.blinky = Ghost(self, 13*self.spalte, 14*self.zeile, 0, self.game.blinkyR_images, self.game.blinkyU_images, self.game.blinkyD_images, self.game.vulnerable_images, self.game.blinking_images)
+            self.blinky = Ghost(self, 13*self.spalte, 11*self.zeile, 0, self.game.blinkyR_images, self.game.blinkyU_images, self.game.blinkyD_images, self.game.vulnerable_images, self.game.blinking_images)
             self.inky = Ghost(self, 11*self.spalte, 14*self.zeile, 1, self.game.inkyR_images, self.game.inkyU_images, self.game.inkyD_images, self.game.vulnerable_images, self.game.blinking_images)
-            self.pinky = Ghost(self, 12*self.spalte, 14*self.zeile, 2, self.game.pinkyR_images, self.game.pinkyU_images, self.game.pinkyD_images, self.game.vulnerable_images, self.game.blinking_images)
-            self.clyde = Ghost(self, 13*self.spalte, 14*self.zeile, 0, self.game.clydeR_images, self.game.clydeU_images, self.game.clydeD_images, self.game.vulnerable_images, self.game.blinking_images)
+            self.pinky = Ghost(self, 13*self.spalte, 14*self.zeile, 2, self.game.pinkyR_images, self.game.pinkyU_images, self.game.pinkyD_images, self.game.vulnerable_images, self.game.blinking_images)
+            self.clyde = Ghost(self, 16*self.spalte, 14*self.zeile, 0, self.game.clydeR_images, self.game.clydeU_images, self.game.clydeD_images, self.game.vulnerable_images, self.game.blinking_images)
         self.ghosts = [self.blinky, self.inky, self.pinky, self.clyde] 
         self.invulnerable = False
         self.invulnerable_start_time = None  
@@ -668,11 +668,11 @@ class Gamestate:
         self.blinky.update()
         if self.game_start_time is not None:
             elapsed_time = pygame.time.get_ticks() - self.game_start_time
-            if elapsed_time > 2000: # Inky nach 3 Sekunden freilassen
+            if elapsed_time > 5000: # Inky nach 5 Sekunden freilassen
                 self.inky.update()
-            if elapsed_time >4000: # Pinky nach 5 Sekunden freilassen
+            if elapsed_time >11000: # Pinky nach 11 Sekunden freilassen
                 self.pinky.update()
-            if elapsed_time > 5000: # Clyde nach 7 Sekunden freilassen
+            if elapsed_time > 17000: # Clyde nach 17 Sekunden freilassen
                     self.clyde.update()
         
     # Countdown Screen bevor das Spiel beginnt   
